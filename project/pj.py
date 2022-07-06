@@ -68,7 +68,7 @@ def get_VDID():
     '''
     
     # 用經緯度找離天險最近的VDs
-    '''
+    
     my_lon, my_lat = 121.540466, 25.052012 #天險座標
     plt.plot(my_lon, my_lat, 'o', color='red')
     min_location_diff = 99999
@@ -82,7 +82,7 @@ def get_VDID():
     print(min_VD_dict)
     plt.plot(min_VD_dict['PositionLon'], min_VD_dict['PositionLat'], 'o', color='blue')
     plt.show()
-    '''
+    
     
     # get api (5秒跑一次)
     old_Lanes_list = []
