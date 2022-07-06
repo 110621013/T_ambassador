@@ -1,0 +1,18 @@
+﻿範例輸入1.
+"K<K qk(lp](lzYl]uYzc(gn |`m Kgvlzgt LY|Y(;wjxgzY|awf6
+
+
+範例輸出1.
+
+
+*CDC is the trademark of the Control Data Corporation.
+
+
+範例輸入2.
+
+
+"KLJ;(:ifs qk(Yugv_{l(lp](dijo]{l(hza~Y|]tq(gfm\(Zifsk(av \Yqoif6
+
+
+範例輸出2.
+*CTBC Bank is amongst the largest privately owned banks in Taiwan.
