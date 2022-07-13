@@ -1,6 +1,8 @@
 auto_signInOut_IDPW.py
 *.mp4
 *.pptx
+*.csv
+*.xml
 123123-2.png
 /影片素材
 /project/key.py
