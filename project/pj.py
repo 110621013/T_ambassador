@@ -68,70 +68,6 @@ def google_map_api_test():
         print('--no considerIp--')
     print(geolocate_post_return_dict['location'], geolocate_post_return_dict['accuracy'])
 '''
-'''
-def kivy_test():
-    from kivy.app import App
-    from kivy.uix.screenmanager import Screen,SlideTransition
-    #from kivy.core.text import LabelBase
-    from kivy.uix.button import ButtonBehavior
-    from kivy.uix.image import Image
-    from kivy.clock import Clock
-    import time
-    
-    #LabelBase.register(
-    #    name='SiyuanHeiti',
-    #    fn_regular='./font/SourceHanSansCN-Normal.ttf'
-    #)
-    
-    # 影象按鈕
-    class ImageButton(ButtonBehavior,Image):
-        pass
-    # 秒錶螢幕
-    class StopwatchScreen(Screen):
-        pass
-    # 時鐘螢幕
-    class ClockScreen(Screen):
-        pass
-    
-    class MainApp(App):
-        def __init__(self):
-            sw_started = False # 秒錶啟動狀態
-            sw_seconds = 0 # 當前秒錶秒數
-        def update(self,n):
-            # 如果秒錶已啟動，更新當前秒數
-            if self.sw_started:
-                self.sw_seconds += n
-            # 更新當前時間
-            self.root.ids['clock_screen'].ids['time'].text = time.strftime("[b]%H[/b]:%M:%S")
-            # 更新秒錶
-            m,s = divmod(self.sw_seconds,60) # 返回一個包含商和餘數的元組
-            self.root.ids['stopwatch_screen'].ids['stopwatch'].text = ("%02d: %02d.[size=40]%02d[/size]" % (int(m),int(s),int(s*100%100)))
-        # 重寫程式啟動的事件
-        def on_start(self):
-            Clock.schedule_interval(self.update,0)
-        # 開始/停止
-        def start_stop(self):
-            self.root.ids['stopwatch_screen'].ids['start_stop'].text = 'start!' if self.sw_started else 'stop!'
-            self.sw_started = not self.sw_started
-        # 重置秒錶
-        def reset(self):
-            if self.sw_started:
-                self.root.ids['stopwatch_screen'].ids['start_stop'].text = 'start!'
-                self.sw_started = False
-                self.sw_seconds = 0
-        def go_forward(self):
-            screen_manager = self.root.ids['screen_manager']
-            screen_manager.transition = SlideTransition(direction="right")
-            screen_manager.current = "stopwatch_screen"
-        def go_back(self):
-            screen_manager = self.root.ids['screen_manager']
-            screen_manager.transition = SlideTransition(direction="left")
-            screen_manager.current = "clock_screen"
-    
-    if __name__ == '__main__':
-        app = MainApp()
-        app.run()
-'''
 
 def get_VDID_and_plot():
     # get access_token
@@ -372,19 +308,125 @@ def xml_analysis():
     plt.contourf(dbz)
     plt.colorbar()
     plt.show()
+
+def get_cwb_station_lonlat():
+    # 局屬
+    api_url = 'https://cwbopendata.s3.ap-northeast-1.amazonaws.com/DIV3/C-B0074-001.json'
+    api_return_dict = requests.get(api_url).json()
+    #print(api_return_dict)
+    station_list = api_return_dict['cwbdata']['resources']['resource']['data']['stationsStatus']['station']
+    assert type(station_list) == type([])
     
+    with open(os.path.join('.', 'project', 'stationID.txt'), 'a' ,encoding='UTF-8') as f:
+        print('---局屬---')
+        f.write('---局屬---')
+        for station in station_list:
+            #print('-->', VD_dict_taipei)
+            if station['status'] == '現存測站':
+                if station['note']:
+                    f.write('{}_{} lon={} lat={}, {}\n'.format(station['stationID'], station['stationName'], station['longitude'], station['latitude'], station['note']))
+                else:
+                    f.write('{}_{} lon={} lat={}\n'.format(station['stationID'], station['stationName'], station['longitude'], station['latitude']))
     
+    # 無人
+    api_url = 'https://cwbopendata.s3.ap-northeast-1.amazonaws.com/DIV3/C-B0074-002.json'
+    api_return_dict = requests.get(api_url).json()
+    #print(api_return_dict)
+    station_list = api_return_dict['cwbdata']['resources']['resource']['data']['stationsStatus']['station']
+    assert type(station_list) == type([])
     
+    with open(os.path.join('.', 'project', 'stationID.txt'), 'a', encoding='UTF-8') as f:
+        print('---無人---')
+        f.write('---無人---')
+        for station in station_list:
+            #print('-->', VD_dict_taipei)
+            if station['status'] == '現存測站':
+                if station['note']:
+                    f.write('{}_{} lon={} lat={}, {}\n'.format(station['stationID'], station['stationName'], station['longitude'], station['latitude'], station['note']))
+                else:
+                    f.write('{}_{} lon={} lat={}\n'.format(station['stationID'], station['stationName'], station['longitude'], station['latitude']))
+    
+
+# 丹宇ㄉ地理資訊
+def get_geo_data(lon, lat, hourly_rainfall):
+    import geopandas
+    from geopandas import GeoDataFrame
+    import shapely
+    from shapely.geometry import Point 
+
+    if 25 <= hourly_rainfall < 41.6 :
+        df = geopandas.GeoDataFrame.from_file('.shp檔案名')
+    elif 41.6 <= hourly_rainfall < 58.3 :
+        df = geopandas.GeoDataFrame.from_file('.shp檔案名')
+    elif 58.3< hourly_rainfall :
+        df = geopandas.GeoDataFrame.from_file('.shp檔案名')
+    
+    df = df.to_crs(4326)  
+    df = df.dropna(axis=0) 
+    
+    point = Point(lon,lat)
+    s = df['geometry'] 
+    output = s.contains(point) 
+    return output
+
+def a1_with_weather():
+    project_path = os.path.join(os.path.dirname(__file__))
+    for filename in os.listdir(project_path):
+        if '交通事故資料' in filename:
+            print('->', filename)
+            df = pd.read_csv(os.path.join(os.path.dirname(__file__), filename))
+            print(df.shape, len(df))
+            
+            #去掉最後兩行廢物:)
+            for _ in range(2):
+                df = df.drop(df.shape[0]-1, axis=0)
+            #改民國為西元
+            for i in range(len(df)):
+                df['發生時間'].iloc[i] = df['發生時間'].iloc[i].replace(df['發生時間'].iloc[i][0:3], str(int(df['發生時間'].iloc[i][0:3]) + 1911))
+            
+            #for row in df.itertuples(): #要iteration用這樣
+            #    print('-->', row[1], row[5], row[6]) #0idx 1發生時間	2發生地點	3死亡受傷人數	4車種	5經度	6緯度
+            #print(df['發生時間']) #, df['經度'], df['緯度']
+            
+            '''
+            for time_string in df['發生時間']:
+                #print(time_string)
+                result = time.strptime(time_string, "%Y年%m月%d日 %H時%M分%S秒")
+                print(result)
+            '''
+            plt.scatter(df['經度'], df['緯度'], s=2, marker='o', label=filename)
+    plt.xlabel('lon')
+    plt.ylabel('lat')
+    plt.legend()
+    
+    plt.xlim(119, 123)
+    plt.ylim(21.5, 25.5)
+    
+    plt.show()
+            
+
 
 
 if __name__ == '__main__':
     #test1()
     #test2()
+    
+    # google map
     #google_map_api_test()
-    #kivy_test() #有夠麻煩還要另外做UX設計
-    
-    
+    # get_google_map_path(begin, end)
+
+    # 交通
     #get_VDID_and_plot()
     #auto_get_traffic_api_and_save()
     
-    xml_analysis()
+    # 天氣
+    #xml_analysis() #雷達資料處裡
+    #get_cwb_station_lonlat()
+    
+    # 地理
+    #lon, lat = 121.540672, 25.052168
+    #hourly_rainfall = 30
+    #get_geo_data(lon, lat, hourly_rainfall)
+    
+    # A1事故跟天氣關係
+    a1_with_weather()
