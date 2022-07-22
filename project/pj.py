@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 import requests
 import pandas as pd
 import numpy as np
+#import threading
+from concurrent.futures.thread import ThreadPoolExecutor
+
 
 '''
 def test1():
@@ -235,8 +238,56 @@ def get_VDID_and_plot():
         else:
             print('->', name, obj)'''
 
-def auto_get_traffic_api_and_save():
-    get_gap = 60.0 #間隔多久抓一次
+#下載一次[新北 台北 桃園 基隆]的VD資料
+def save_traffic_api_data_county(access_token, county, now_time, VDid_list, save_path):
+    print('--> getting', county)
+    # 執行抓資料
+    now_time_dict = {} # need pd.DataFrame()
+    now_time_str = time.strftime('%Y/%m/%d_%H:%M', time.localtime(now_time))
+    now_time_dict[now_time_str] = []
+            
+    for i in range(len(VDid_list)):
+        url = 'https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/Live/VD/City/{}/{}?%24format=JSON'.format(county, VDid_list[i])
+        VDid_return_dict = requests.get(url, headers={'authorization': 'Bearer {}'.format(access_token)}).json() #網站所見之json
+        #if i%100 == 0:
+        #    print('i', i)
+        VDLives = VDid_return_dict['VDLives'][0]
+        now_time_dict[now_time_str].append(VDLives)
+            
+    #now_time_df = pd.DataFrame(now_time_dict)
+    now_time_df = pd.concat([pd.DataFrame(v) for k,v in now_time_dict.items()], keys=now_time_dict)
+    now_time_df.to_csv(os.path.join(save_path, 'now_time_df.csv'), mode='a')
+
+#下載一次省道的VD資料
+def save_traffic_api_data_highway(access_token, now_time, VDid_list_highway, save_path):
+    print('--> getting highway')
+    # 執行抓資料
+    now_time_dict = {} # need pd.DataFrame()
+    now_time_str = time.strftime('%Y/%m/%d_%H:%M', time.localtime(now_time))
+    now_time_dict[now_time_str] = []
+            
+    for i in range(len(VDid_list_highway)):
+        url = 'https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/Live/VD/Highway/{}?%24format=JSON'.format(VDid_list_highway[i])
+        VDid_return_dict = requests.get(url, headers={'authorization': 'Bearer {}'.format(access_token)}).json() #網站所見之json
+        #if i%100 == 0:
+        #    print('i', i)
+        
+        # 有可能有VDid_return_dict['VDLives']沒東西的問題
+        if VDid_return_dict['VDLives']:
+            VDLives = VDid_return_dict['VDLives'][0]
+            now_time_dict[now_time_str].append(VDLives)
+        else:
+            print('==> no', VDid_list_highway[i])
+            
+    #now_time_df = pd.DataFrame(now_time_dict)
+    now_time_df = pd.concat([pd.DataFrame(v) for k,v in now_time_dict.items()], keys=now_time_dict)
+    now_time_df.to_csv(os.path.join(save_path, 'now_time_df.csv'), mode='a')
+    
+
+def auto_get_traffic_api_and_save(get_gap=300): #預設間隔5分鐘抓一次
+    save_path = os.path.join('..', '..', 'data2', '3T')
+    #save_path = os.path.join('.')
+    county_list = ['Taipei','NewTaipei','Taoyuan','Keelung']
     
     # get IDX access_token
     headers = {'content-type': 'application/x-www-form-urlencoded'}
@@ -246,48 +297,57 @@ def auto_get_traffic_api_and_save():
         'client_secret':Client_Secret,
     }
     post_return = requests.post('https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token', headers=headers, data=data)
-    #print(post_return.json())
     access_token = post_return.json()['access_token']
     
-    # get all Taipei VDid_list
-    VDid_list = []
-    api_url = 'https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/VD/City/Taipei?%24format=JSON'
-    api_return_taipei = requests.get(api_url, headers={'authorization': 'Bearer {}'.format(access_token)})
-    api_return_taipei_dict = api_return_taipei.json()
-    VDs_dict_taipei = api_return_taipei_dict['VDs']
-    for VD_dict_taipei in VDs_dict_taipei:
-        VDid_list.append(VD_dict_taipei['VDID'])
+    # get all county VDid_list
+    county_dict = {}
+    for county in county_list:
+        VDid_list = []
+        api_url_county = 'https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/VD/City/{}?%24format=JSON'.format(county)
+        api_return_county = requests.get(api_url_county, headers={'authorization': 'Bearer {}'.format(access_token)})
+        api_return_county_dict = api_return_county.json()
+        VDs_list_county = api_return_county_dict['VDs']
+        for VD_dict_county in VDs_list_county:
+            VDid_list.append(VD_dict_county['VDID'])
+        county_dict[county] = VDid_list
+        print(county, len(VDid_list))
+    # get highway VDid_list
+    VDid_list_highway = []
+    api_url_highway =   'https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/VD/Highway?%24format=JSON'
+    api_return_highway = requests.get(api_url_highway, headers={'authorization': 'Bearer {}'.format(access_token)})
+    api_return_dict_highway = api_return_highway.json()
+    VDs_list_highway = api_return_dict_highway['VDs']
+    # 緯度過24.5
+    for VD_dict_highway in VDs_list_highway:
+        if VD_dict_highway['PositionLat'] > 24.5:
+            VDid_list_highway.append(VD_dict_highway['VDID'])
+    print('highway', len(VDid_list_highway))
 
-    print('gogo:')
+    #print('gogo:')
     last_time = 0.0
     while True:
         now_time = time.time() # float
-        if now_time - last_time > get_gap:
-            # 執行抓資料
+        now_time_str = time.strftime('%Y/%m/%d_%H:%M', time.localtime(now_time))
+        print(now_time_str)
+        if now_time - last_time > get_gap: # 執行抓資料
             start_time = time.time()
-            # 時間項
-            now_time_dict = {} # need pd.DataFrame()
-            now_time_str = time.strftime('%Y/%m/%d_%H:%M', time.localtime(now_time))
-            now_time_dict[now_time_str] = []
-            
-            for i in range(len(VDid_list)):
-                #single_VDid_dict = {}
-                url = 'https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/VD/City/Taipei/{}?%24format=JSON'.format(VDid_list[i])
-                VDid_return_dict = requests.get(url, headers={'authorization': 'Bearer {}'.format(access_token)}).json() #網站所見之json
-                if i%100 == 0:
-                    print('i', i)
-                VDs = VDid_return_dict['VDs'][0]
-                now_time_dict[now_time_str].append(VDs)
-            
-            #now_time_df = pd.DataFrame(now_time_dict)
-            now_time_df = pd.concat([pd.DataFrame(v) for k,v in now_time_dict.items()], keys=now_time_dict)
-            now_time_df.to_csv('now_time_df_v2.csv', mode='a')
-            
+            # county data
+            for county, VDid_list in county_dict.items():
+                save_traffic_api_data_county(access_token, county, now_time, VDid_list, save_path)
+            # highway data
+            save_traffic_api_data_highway(access_token, now_time, VDid_list_highway, save_path)
             last_time = now_time
-            print('抓資料執行ㄌ：', time.time()-start_time, now_time_str)
+            print('抓資料執行ㄌ：', time.time()-start_time)
         else:
             time.sleep(10)
-            print('--sleep--')
+            #print('--sleep--')
+
+
+
+#回傳：最近一個VD的車流資訊(ID、路線方向、幾線道、路名、各車種(MSLT)數量)
+def get_traffic_data(lon, lat):
+    pass
+
 
 def xml_analysis():
     import xml.etree.ElementTree as ET
@@ -369,6 +429,7 @@ def get_geo_data(lon, lat, hourly_rainfall):
     output = s.contains(point) 
     return output
 
+# 對車禍發生做天氣變數(下雨、風強、氣溫、陽光角度)的統計分析
 def a1_with_weather():
     project_path = os.path.join(os.path.dirname(__file__))
     for filename in os.listdir(project_path):
@@ -403,9 +464,17 @@ def a1_with_weather():
     plt.ylim(21.5, 25.5)
     
     plt.show()
-            
-
-
+    
+#多執行緒測試
+def mt_test_1():
+    print("start1")
+    time.sleep(10)
+    print("sleep done1")
+def mt_test_2():
+    print("start2")
+    time.sleep(5)
+    print("sleep done2")
+    
 
 if __name__ == '__main__':
     #test1()
@@ -417,7 +486,9 @@ if __name__ == '__main__':
 
     # 交通
     #get_VDID_and_plot()
-    #auto_get_traffic_api_and_save()
+    auto_get_traffic_api_and_save()
+        
+    #get_traffic_data(lon, lat)
     
     # 天氣
     #xml_analysis() #雷達資料處裡
@@ -429,4 +500,16 @@ if __name__ == '__main__':
     #get_geo_data(lon, lat, hourly_rainfall)
     
     # A1事故跟天氣關係
-    a1_with_weather()
+    #a1_with_weather()
+    
+    #多執行緒測試
+    '''
+    t1 = threading.Thread(target=mt_test_1)  #建立執行緒
+    t2 = threading.Thread(target=mt_test_2)  #建立執行緒
+    t1.start()  #執行
+    t2.start()  #執行
+    print("end")'''
+    '''
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        executor.submit(mt_test_1)
+        executor.submit(mt_test_2)'''
