@@ -1,5 +1,5 @@
 import time
-from key import google_key, Client_Id, Client_Secret
+from key import Client_Id, Client_Secret
 import os
 import matplotlib.pyplot as plt
 import requests
@@ -256,7 +256,7 @@ def save_traffic_api_data_county(access_token, county, now_time, VDid_list, save
             
     #now_time_df = pd.DataFrame(now_time_dict)
     now_time_df = pd.concat([pd.DataFrame(v) for k,v in now_time_dict.items()], keys=now_time_dict)
-    now_time_df.to_csv(os.path.join(save_path, 'now_time_df.csv'), mode='a')
+    now_time_df.to_csv(os.path.join(save_path, 'traffic_{}.csv'.format(county)), mode='a')
 
 #下載一次省道的VD資料
 def save_traffic_api_data_highway(access_token, now_time, VDid_list_highway, save_path):
@@ -272,16 +272,25 @@ def save_traffic_api_data_highway(access_token, now_time, VDid_list_highway, sav
         #if i%100 == 0:
         #    print('i', i)
         
+        # 中文VDID就不要ㄌ
+        china = False
+        for c in VDid_list_highway[i]:
+            if '\u4e00' <= c <= '\u9fa5':
+                china = True
+        
         # 有可能有VDid_return_dict['VDLives']沒東西的問題
-        if VDid_return_dict['VDLives']:
-            VDLives = VDid_return_dict['VDLives'][0]
-            now_time_dict[now_time_str].append(VDLives)
+        if not china:
+            if VDid_return_dict['VDLives']:
+                VDLives = VDid_return_dict['VDLives'][0]
+                now_time_dict[now_time_str].append(VDLives)
+            else:
+                print('==> no', VDid_list_highway[i])
         else:
-            print('==> no', VDid_list_highway[i])
+            print('==> have_china', VDid_list_highway[i])
             
     #now_time_df = pd.DataFrame(now_time_dict)
     now_time_df = pd.concat([pd.DataFrame(v) for k,v in now_time_dict.items()], keys=now_time_dict)
-    now_time_df.to_csv(os.path.join(save_path, 'now_time_df.csv'), mode='a')
+    now_time_df.to_csv(os.path.join(save_path, 'traffic_highway.csv'), mode='a')
     
 
 def auto_get_traffic_api_and_save(get_gap=300): #預設間隔5分鐘抓一次
@@ -342,7 +351,172 @@ def auto_get_traffic_api_and_save(get_gap=300): #預設間隔5分鐘抓一次
             time.sleep(10)
             #print('--sleep--')
 
+def plot_traffic_data():
+    pass
+    
+    #my_data = np.genfromtxt(os.path.join('.', 'project', 'now_time_df.csv'), delimiter=',', encoding='utf-8', dtype=str)
+    #print(my_data.shape, type(my_data))
+    #my_data_arr = np.array(my_data)
+    
+    #now_time_df = pd.read_csv(os.path.join('.', 'project', 'now_time_df.csv'))
+    #print(now_time_df.head)
 
+
+#下載一次[新北 台北 桃園 基隆]的VD資料
+def get_DataCollectTime_traffic_flow_county(access_token, county, VDid_list, all_data_dict):
+    print('--> getting', county)
+    # 執行抓資料
+    for i in range(len(VDid_list)):
+        url = 'https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/Live/VD/City/{}/{}?%24format=JSON'.format(county, VDid_list[i])
+        VDid_return_dict = requests.get(url, headers={'authorization': 'Bearer {}'.format(access_token)}).json() #網站所見之json
+        #if i%100 == 0:
+        #    print('i', i)
+        VDLives = VDid_return_dict['VDLives'][0]
+        all_data_dict[VDLives["VDID"]]["DataCollectTime"] = VDLives["DataCollectTime"]
+        mslt = [0, 0, 0, 0]
+        mslt_v = [0.0, 0.0, 0.0, 0.0]
+        for j in range(len(VDLives["LinkFlows"])): #對每個LinkFlows
+            for lane_dict in VDLives["LinkFlows"][j]["Lanes"]: #對每個Lane
+                for k in range(4): #對每個車種
+                    mslt[k] += lane_dict['Vehicles'][k]['Volume']
+                    mslt_v[k] += lane_dict['Vehicles'][k]['Speed']
+        for k in range(4): #算平均車速
+            if mslt[k] == 0:
+                continue
+            else:
+                mslt_v[k] /= mslt[k]
+        all_data_dict[VDLives["VDID"]]['Volume'] = mslt
+        all_data_dict[VDLives["VDID"]]['Speed'] = mslt_v
+    return all_data_dict
+
+#下載一次省道的VD資料
+def get_traffic_api_data_highway(access_token, VDid_list_highway, all_data_dict):
+    print('--> getting highway')
+    # 執行抓資料
+            
+    for i in range(len(VDid_list_highway)):
+        url = 'https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/Live/VD/Highway/{}?%24format=JSON'.format(VDid_list_highway[i])
+        VDid_return_dict = requests.get(url, headers={'authorization': 'Bearer {}'.format(access_token)}).json() #網站所見之json
+        #if i%100 == 0:
+        #    print('i', i)
+        
+        # 有可能有VDid_return_dict['VDLives']沒東西的問題
+        if VDid_return_dict['VDLives']:
+            VDLives = VDid_return_dict['VDLives'][0]
+            
+            all_data_dict[VDLives["VDID"]]["DataCollectTime"] = VDLives["DataCollectTime"]
+            mslt = [0, 0, 0, 0]
+            mslt_v = [0.0, 0.0, 0.0, 0.0]
+            for j in range(len(VDLives["LinkFlows"])): #對每個LinkFlows
+                for lane_dict in VDLives["LinkFlows"][j]["Lanes"]: #對每個Lane
+                    for k in range(len(lane_dict['Vehicles'])): #對每個車種
+                        try:
+                            mslt[k] += lane_dict['Vehicles'][k]['Volume']
+                            mslt_v[k] += lane_dict['Vehicles'][k]['Speed']
+                        except KeyError: #沒車速
+                            mslt[k] += lane_dict['Vehicles'][k]['Volume']
+                            mslt_v = [-1.0, -1.0, -1.0, -1.0]
+
+            for k in range(4): #算平均車速
+                if mslt[k] != 0:
+                    mslt_v[k] /= mslt[k]
+            all_data_dict[VDLives["VDID"]]['Volume'] = mslt
+            all_data_dict[VDLives["VDID"]]['Speed'] = mslt_v
+        else:
+            print('==> no', VDid_list_highway[i])
+            all_data_dict[VDid_list_highway[i]]["DataCollectTime"] = None
+            all_data_dict[VDid_list_highway[i]]["Volume"] = None
+            all_data_dict[VDid_list_highway[i]]["Speed"] = None
+    return all_data_dict
+
+
+#回傳：無，每五分鐘儲存一套各VD的經緯度跟車流資料
+def save_traffic_data(get_gap=300):
+    save_path = os.path.join('.')
+    county_list = ['Taipei','NewTaipei','Taoyuan','Keelung']
+    all_data_dict = {}
+    
+    # get IDX access_token
+    headers = {'content-type': 'application/x-www-form-urlencoded'}
+    data = {
+        'grant_type':'client_credentials',
+        'client_id':Client_Id,
+        'client_secret':Client_Secret,
+    }
+    post_return = requests.post('https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token', headers=headers, data=data)
+    access_token = post_return.json()['access_token']
+    
+    # get all county VDid_list
+    county_dict = {}
+    for county in county_list:
+        VDid_list = []
+        api_url_county = 'https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/VD/City/{}?%24format=JSON'.format(county)
+        api_return_county = requests.get(api_url_county, headers={'authorization': 'Bearer {}'.format(access_token)})
+        api_return_county_dict = api_return_county.json()
+        VDs_list_county = api_return_county_dict['VDs']
+        for VD_dict_county in VDs_list_county:
+            VDid_list.append(VD_dict_county['VDID'])
+            
+            all_data_dict[VD_dict_county['VDID']] = {}
+            
+            all_data_dict[VD_dict_county['VDID']]['lon'] = VD_dict_county['PositionLon']
+            all_data_dict[VD_dict_county['VDID']]['lat'] = VD_dict_county['PositionLat']
+            all_data_dict[VD_dict_county['VDID']]['RoadName'] = VD_dict_county['RoadName']
+            all_data_dict[VD_dict_county['VDID']]['RoadClass'] = VD_dict_county['RoadClass']
+            total_LaneNum = 0
+            for DetectionLinks_dict in VD_dict_county['DetectionLinks']:
+                total_LaneNum += DetectionLinks_dict['LaneNum']
+            all_data_dict[VD_dict_county['VDID']]['LaneNum'] = total_LaneNum
+        county_dict[county] = VDid_list
+        print(county, len(VDid_list))
+        
+    # get highway VDid_list
+    VDid_list_highway = []
+    api_url_highway =   'https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/VD/Highway?%24format=JSON'
+    api_return_highway = requests.get(api_url_highway, headers={'authorization': 'Bearer {}'.format(access_token)})
+    api_return_dict_highway = api_return_highway.json()
+    VDs_list_highway = api_return_dict_highway['VDs']
+    # 緯度過24.5
+    for VD_dict_highway in VDs_list_highway:
+        if VD_dict_highway['PositionLat'] > 24.5:
+            VDid_list_highway.append(VD_dict_highway['VDID'])
+            
+            all_data_dict[VD_dict_highway['VDID']] = {}
+            
+            all_data_dict[VD_dict_highway['VDID']]['lon'] = VD_dict_highway['PositionLon']
+            all_data_dict[VD_dict_highway['VDID']]['lat'] = VD_dict_highway['PositionLat']
+            all_data_dict[VD_dict_highway['VDID']]['RoadName'] = VD_dict_highway['RoadName']
+            all_data_dict[VD_dict_highway['VDID']]['RoadClass'] = VD_dict_highway['RoadClass']
+            total_LaneNum = 0
+            for DetectionLinks_dict in VD_dict_highway['DetectionLinks']:
+                total_LaneNum += DetectionLinks_dict['LaneNum']
+            all_data_dict[VD_dict_highway['VDID']]['LaneNum'] = total_LaneNum
+    print('highway', len(VDid_list_highway))
+
+    print('len(all_data_dict.keys())', len(all_data_dict.keys()))
+
+    #print('gogo:')
+    last_time = 0.0
+    while True:
+        now_time = time.time() # float
+        now_time_str = time.strftime('%Y_%m_%d_%H_%M', time.localtime(now_time))
+        print(now_time_str)
+        if now_time - last_time > get_gap: # 執行抓資料
+            start_time = time.time()
+            # county data
+            for county, VDid_list in county_dict.items():
+                all_data_dict = get_DataCollectTime_traffic_flow_county(access_token, county, VDid_list, all_data_dict)
+            # highway data
+            all_data_dict = get_traffic_api_data_highway(access_token, VDid_list_highway, all_data_dict)
+            last_time = now_time
+            print('抓資料執行ㄌ：', time.time()-start_time)
+            #print('all_data_dict', all_data_dict)
+            np.save(os.path.join('.', 'project', 'all_data_dict_{}.npy'.format(now_time_str)), all_data_dict)
+        else:
+            time.sleep(10)
+            #print('--sleep--')
+def save_traffic_data(get_gap=300):
+    pass
 
 #回傳：最近一個VD的車流資訊(ID、路線方向、幾線道、路名、各車種(MSLT)數量)
 def get_traffic_data(lon, lat):
@@ -412,22 +586,65 @@ def get_geo_data(lon, lat, hourly_rainfall):
     import geopandas
     from geopandas import GeoDataFrame
     import shapely
-    from shapely.geometry import Point 
-
-    if 25 <= hourly_rainfall < 41.6 :
-        df = geopandas.GeoDataFrame.from_file('.shp檔案名')
-    elif 41.6 <= hourly_rainfall < 58.3 :
-        df = geopandas.GeoDataFrame.from_file('.shp檔案名')
-    elif 58.3< hourly_rainfall :
-        df = geopandas.GeoDataFrame.from_file('.shp檔案名')
-    
-    df = df.to_crs(4326)  
-    df = df.dropna(axis=0) 
+    from shapely.geometry import Point
     
     point = Point(lon,lat)
-    s = df['geometry'] 
-    output = s.contains(point) 
-    return output
+
+    #幹你娘台北
+    rainfall_thr_list = []
+    if (25 <= hourly_rainfall):
+        rainfall_thr_list.append('25')
+    if (41.6 <= hourly_rainfall):
+        rainfall_thr_list.append('41.6')
+    if (58.3 <= hourly_rainfall):
+        rainfall_thr_list.append('58.3')
+    #print(rainfall_thr_list)
+
+    tp_df = False
+    for rainfall_thr in rainfall_thr_list:
+        tp_single_df = geopandas.read_file('tp_{}mm.shp'.format(rainfall_thr))
+        tp_single_df = tp_single_df.to_crs(4326)
+        #print('->, rainfall_thr', list(tp_single_df.contains(point)), rainfall_thr)
+        if type(tp_df) != type(False):
+            tp_df = pd.concat([tp_df, tp_single_df['geometry']], axis=0)
+        else:
+            tp_df = tp_single_df['geometry']
+        #print('tp_df', type(tp_df))
+    
+    #其他縣市
+    rainfall_thr = False
+    if (25 <= hourly_rainfall < 41.6):
+        rainfall_thr = '25'
+    elif (41.6 <= hourly_rainfall < 58.3):
+        rainfall_thr = '41.6'
+    elif (58.3 <= hourly_rainfall):
+        rainfall_thr = '58.3'
+    
+    if rainfall_thr:
+        ty_single_df = geopandas.read_file('ty_{}mm.shp'.format(rainfall_thr))
+        sp_single_df = geopandas.read_file('sp_{}mm.shp'.format(rainfall_thr))
+        KL_single_df = geopandas.read_file('KL_{}mm.shp'.format(rainfall_thr))
+        #print('->', list(ty_single_df.contains(point)))
+        #print('->', list(sp_single_df.contains(point)))
+        #print('->', list(KL_single_df.contains(point)))
+        other_county_df = pd.concat([ty_single_df['geometry'],sp_single_df['geometry'],KL_single_df['geometry']],axis=0)
+    
+    #
+    if (type(tp_df) != type(False)) and rainfall_thr:
+        inp = list(tp_df.contains(point)) + list(other_county_df.contains(point))
+    elif type(tp_df) != type(False):
+        inp = list(tp_df.contains(point))
+    elif rainfall_thr:
+        inp = list(other_county_df.contains(point))
+    else:
+        return False
+    #print('-->', inp, len(inp))
+    if True in inp:
+        return True
+    else:
+        return False
+
+
 
 # 對車禍發生做天氣變數(下雨、風強、氣溫、陽光角度)的統計分析
 def a1_with_weather():
@@ -479,15 +696,12 @@ def mt_test_2():
 if __name__ == '__main__':
     #test1()
     #test2()
-    
-    # google map
-    #google_map_api_test()
-    # get_google_map_path(begin, end)
 
     # 交通
     #get_VDID_and_plot()
-    auto_get_traffic_api_and_save()
-        
+    auto_get_traffic_api_and_save() #31701
+    #plot_traffic_data()
+    #save_traffic_data()
     #get_traffic_data(lon, lat)
     
     # 天氣
@@ -497,7 +711,7 @@ if __name__ == '__main__':
     # 地理
     #lon, lat = 121.540672, 25.052168
     #hourly_rainfall = 30
-    #get_geo_data(lon, lat, hourly_rainfall)
+    #get_geo_data(lon, lat, hourly_rainfall) -> done
     
     # A1事故跟天氣關係
     #a1_with_weather()
