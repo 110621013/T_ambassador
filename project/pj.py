@@ -365,7 +365,7 @@ def plot_traffic_data():
 
 
 #下載一次[新北 台北 桃園 基隆]的VD資料
-def get_DataCollectTime_traffic_flow_county(access_token, county, VDid_list, all_data_dict):
+def get_DataCollectTime_traffic_flow_county(access_token, county, VDid_list, traffic_dict):
     print('--> getting', county)
     # 執行抓資料
     for i in range(len(VDid_list)):
@@ -374,7 +374,7 @@ def get_DataCollectTime_traffic_flow_county(access_token, county, VDid_list, all
         #if i%100 == 0:
         #    print('i', i)
         VDLives = VDid_return_dict['VDLives'][0]
-        all_data_dict[VDLives["VDID"]]["DataCollectTime"] = VDLives["DataCollectTime"]
+        traffic_dict[VDLives["VDID"]]["DataCollectTime"] = VDLives["DataCollectTime"]
         mslt = [0, 0, 0, 0]
         mslt_v = [0.0, 0.0, 0.0, 0.0]
         for j in range(len(VDLives["LinkFlows"])): #對每個LinkFlows
@@ -387,12 +387,12 @@ def get_DataCollectTime_traffic_flow_county(access_token, county, VDid_list, all
                 continue
             else:
                 mslt_v[k] /= mslt[k]
-        all_data_dict[VDLives["VDID"]]['Volume'] = mslt
-        all_data_dict[VDLives["VDID"]]['Speed'] = mslt_v
-    return all_data_dict
+        traffic_dict[VDLives["VDID"]]['Volume'] = mslt
+        traffic_dict[VDLives["VDID"]]['Speed'] = mslt_v
+    return traffic_dict
 
 #下載一次省道的VD資料
-def get_traffic_api_data_highway(access_token, VDid_list_highway, all_data_dict):
+def get_traffic_api_data_highway(access_token, VDid_list_highway, traffic_dict):
     print('--> getting highway')
     # 執行抓資料
             
@@ -406,7 +406,7 @@ def get_traffic_api_data_highway(access_token, VDid_list_highway, all_data_dict)
         if VDid_return_dict['VDLives']:
             VDLives = VDid_return_dict['VDLives'][0]
             
-            all_data_dict[VDLives["VDID"]]["DataCollectTime"] = VDLives["DataCollectTime"]
+            traffic_dict[VDLives["VDID"]]["DataCollectTime"] = VDLives["DataCollectTime"]
             mslt = [0, 0, 0, 0]
             mslt_v = [0.0, 0.0, 0.0, 0.0]
             for j in range(len(VDLives["LinkFlows"])): #對每個LinkFlows
@@ -422,20 +422,20 @@ def get_traffic_api_data_highway(access_token, VDid_list_highway, all_data_dict)
             for k in range(4): #算加權平均車速
                 if mslt[k] != 0:
                     mslt_v[k] /= mslt[k]
-            all_data_dict[VDLives["VDID"]]['Volume'] = mslt
-            all_data_dict[VDLives["VDID"]]['Speed'] = mslt_v
+            traffic_dict[VDLives["VDID"]]['Volume'] = mslt
+            traffic_dict[VDLives["VDID"]]['Speed'] = mslt_v
         else:
             print('==> no', VDid_list_highway[i])
-            all_data_dict[VDid_list_highway[i]]["DataCollectTime"] = None
-            all_data_dict[VDid_list_highway[i]]["Volume"] = None
-            all_data_dict[VDid_list_highway[i]]["Speed"] = None
-    return all_data_dict
+            traffic_dict[VDid_list_highway[i]]["DataCollectTime"] = None
+            traffic_dict[VDid_list_highway[i]]["Volume"] = None
+            traffic_dict[VDid_list_highway[i]]["Speed"] = None
+    return traffic_dict
 
 
 #回傳：無，每五分鐘儲存一套各VD的經緯度跟車流資料
 def save_traffic_data(get_gap=300):
     county_list = ['Taipei','NewTaipei','Taoyuan','Keelung']
-    all_data_dict = {}
+    traffic_dict = {}
     
     # get IDX access_token
     headers = {'content-type': 'application/x-www-form-urlencoded'}
@@ -458,16 +458,16 @@ def save_traffic_data(get_gap=300):
         for VD_dict_county in VDs_list_county:
             VDid_list.append(VD_dict_county['VDID'])
             
-            all_data_dict[VD_dict_county['VDID']] = {}
+            traffic_dict[VD_dict_county['VDID']] = {}
             
-            all_data_dict[VD_dict_county['VDID']]['lon'] = VD_dict_county['PositionLon']
-            all_data_dict[VD_dict_county['VDID']]['lat'] = VD_dict_county['PositionLat']
-            all_data_dict[VD_dict_county['VDID']]['RoadName'] = VD_dict_county['RoadName']
-            all_data_dict[VD_dict_county['VDID']]['RoadClass'] = VD_dict_county['RoadClass']
+            traffic_dict[VD_dict_county['VDID']]['lon'] = VD_dict_county['PositionLon']
+            traffic_dict[VD_dict_county['VDID']]['lat'] = VD_dict_county['PositionLat']
+            traffic_dict[VD_dict_county['VDID']]['RoadName'] = VD_dict_county['RoadName']
+            traffic_dict[VD_dict_county['VDID']]['RoadClass'] = VD_dict_county['RoadClass']
             total_LaneNum = 0
             for DetectionLinks_dict in VD_dict_county['DetectionLinks']:
                 total_LaneNum += DetectionLinks_dict['LaneNum']
-            all_data_dict[VD_dict_county['VDID']]['LaneNum'] = total_LaneNum
+            traffic_dict[VD_dict_county['VDID']]['LaneNum'] = total_LaneNum
         county_dict[county] = VDid_list
         print(county, len(VDid_list))
         
@@ -482,19 +482,19 @@ def save_traffic_data(get_gap=300):
         if VD_dict_highway['PositionLat'] > lat_limit:
             VDid_list_highway.append(VD_dict_highway['VDID'])
             
-            all_data_dict[VD_dict_highway['VDID']] = {}
+            traffic_dict[VD_dict_highway['VDID']] = {}
             
-            all_data_dict[VD_dict_highway['VDID']]['lon'] = VD_dict_highway['PositionLon']
-            all_data_dict[VD_dict_highway['VDID']]['lat'] = VD_dict_highway['PositionLat']
-            all_data_dict[VD_dict_highway['VDID']]['RoadName'] = VD_dict_highway['RoadName']
-            all_data_dict[VD_dict_highway['VDID']]['RoadClass'] = VD_dict_highway['RoadClass']
+            traffic_dict[VD_dict_highway['VDID']]['lon'] = VD_dict_highway['PositionLon']
+            traffic_dict[VD_dict_highway['VDID']]['lat'] = VD_dict_highway['PositionLat']
+            traffic_dict[VD_dict_highway['VDID']]['RoadName'] = VD_dict_highway['RoadName']
+            traffic_dict[VD_dict_highway['VDID']]['RoadClass'] = VD_dict_highway['RoadClass']
             total_LaneNum = 0
             for DetectionLinks_dict in VD_dict_highway['DetectionLinks']:
                 total_LaneNum += DetectionLinks_dict['LaneNum']
-            all_data_dict[VD_dict_highway['VDID']]['LaneNum'] = total_LaneNum
+            traffic_dict[VD_dict_highway['VDID']]['LaneNum'] = total_LaneNum
     print('highway', len(VDid_list_highway))
 
-    print('len(all_data_dict.keys())', len(all_data_dict.keys()))
+    print('len(traffic_dict.keys())', len(traffic_dict.keys()))
 
     #print('gogo:')
     last_time = 0.0
@@ -506,34 +506,38 @@ def save_traffic_data(get_gap=300):
             start_time = time.time()
             # county data
             for county, VDid_list in county_dict.items():
-                all_data_dict = get_DataCollectTime_traffic_flow_county(access_token, county, VDid_list, all_data_dict)
+                traffic_dict = get_DataCollectTime_traffic_flow_county(access_token, county, VDid_list, traffic_dict)
             # highway data
-            all_data_dict = get_traffic_api_data_highway(access_token, VDid_list_highway, all_data_dict)
+            traffic_dict = get_traffic_api_data_highway(access_token, VDid_list_highway, traffic_dict)
             last_time = now_time
             print('抓資料執行ㄌ：', time.time()-start_time)
-            #print('all_data_dict', all_data_dict)
-            np.save(os.path.join('.', 'project', 'all_data_dict.npy'), all_data_dict)
-            lon, lat = 121.540672, 25.052168
-            min_VD_id, min_VD_dict = get_traffic_data(lon, lat)
-            print(min_VD_id, min_VD_dict)
+            #print('traffic_dict', traffic_dict)
+            np.save(os.path.join('.', 'traffic_dict.npy'), traffic_dict)
         else:
             time.sleep(10)
             #print('--sleep--')
 
 #回傳：最近一個VD的車流資訊(ID、路線方向、幾線道、路名、各車種(MSLT)數量)
 def get_traffic_data(lon, lat):
-    all_data_dict = np.load(os.path.join('.', 'project', 'all_data_dict.npy'), allow_pickle=True).item()
+    traffic_dict = np.load(os.path.join('.', 'traffic_dict.npy'), allow_pickle=True).item()
     
     min_location_diff = 99999
-    min_VD_id, min_VD_dict = '', {}
-    for VD_id, VD_dict in all_data_dict.items():
+    min_VD_dict = {}
+    for _, VD_dict in traffic_dict.items():
         location_diff = ((lon-VD_dict['lon'])**2 + (lat-VD_dict['lat'])**2)**0.5
         if location_diff < min_location_diff:
-            min_VD_id = VD_id
             min_VD_dict = VD_dict
             min_location_diff = location_diff
-    #print(min_VD_id, min_VD_dict)
-    return min_VD_id, min_VD_dict
+    #print(min_VD_dict)
+    return min_VD_dict
+
+def look_all_vd():
+    traffic_dict = np.load(os.path.join('.', 'traffic_dict.npy'), allow_pickle=True).item()
+    for VD_id, VD_dict in traffic_dict.items():
+        #print(VD_id, VD_dict['Volume'])
+        if VD_dict['Volume']:
+            if VD_dict['Volume'][3] > 0:
+                print(VD_id, VD_dict, VD_dict['RoadName'], VD_dict['Volume'])
 
 def traffic_test():
     lat_list = [
@@ -644,7 +648,7 @@ def save_obs_temp_data(): #局屬跟無人
     url_cwb = 'https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=CWB-800E53EB-AF03-4977-99E7-0C1F2AE8BFB7&format=JSON&stationId=466850,466880,466900,466910,466920,466930,466940,467050&elementName=WDSD,TEMP,HUMD,VIS,Weather&parameterName='
     url_auto = 'https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization=CWB-800E53EB-AF03-4977-99E7-0C1F2AE8BFB7&format=JSON&stationId=C0A520,C0A530,C0A540,C0A550,C0A560,C0A570,C0A640,C0A650,C0A660,C0A770,C0A860,C0A870,C0A880,C0A890,C0A920,C0A931,C0A940,C0A950,C0A970,C0A980,C0A9C0,C0A9F0,C0AC40,C0AC60,C0AC70,C0AC80,C0ACA0,C0AD00,C0AD10,C0AD30,C0AD40,C0AD50,C0AG80,C0AH00,C0AH10,C0AH30,C0AH40,C0AH50,C0AH70,C0AH80,C0AH90,C0AI00,C0AI10,C0AI20,C0AI30,C0AI40,C0AJ10,C0AJ20,C0AJ30,C0AJ40,C0AJ50,C0B010,C0B040,C0B050,C0C460,C0C480,C0C490,C0C590,C0C620,C0C630,C0C650,C0C660,C0C670,C0C680,C0C700,C0C710,C0C720,C0C730,C0C740,C1A630,C1A750,C1A760,C1A9N0,C1AC50,C1AI50,C1AI60,C1C510&elementName=WDSD,TEMP,HUMD&parameterName='
     url_list = [url_cwb,url_auto]
-    obs_temp_data_dict = {}
+    weather_obs_temp_dict = {}
     
     for url in url_list:
         location = requests.get(url).json()['records']['location']
@@ -656,7 +660,7 @@ def save_obs_temp_data(): #局屬跟無人
             humd = str(round(float(i['weatherElement'][2]['elementValue'])*100 ,1))
             app_temp = str(1.07*float(temp)+(0.2*float(humd)/100*6.105*np.exp(17.27*float(temp)/(237.7+float(temp))))-0.65*float(wdsd)-2.7)
             
-            obs_temp_data_dict[i['stationId']] = {
+            weather_obs_temp_dict[i['stationId']] = {
                 'lat':lat,
                 'lon':lon,
                 'wdsd':wdsd,
@@ -664,31 +668,31 @@ def save_obs_temp_data(): #局屬跟無人
                 'humd':humd,
                 'app_temp':app_temp,
             }
-    np.save('obs_temp_data_dict.npy',obs_temp_data_dict)
+    np.save('weather_obs_temp_dict.npy',weather_obs_temp_dict)
     print('save_obs_temp_data done')
-    #obs_temp_data_dict = np.load('obs_temp_data_dict.npy', allow_pickle=True).item()
+    #weather_obs_temp_dict = np.load('weather_obs_temp_dict.npy', allow_pickle=True).item()
 def save_obs_rain_data(): #雨量
     url_rain = 'https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0002-001?Authorization=CWB-800E53EB-AF03-4977-99E7-0C1F2AE8BFB7&format=JSON&stationId=C0A520,C0A530,C0A540,C0A550,C0A560,C0A570,C0A640,C0A650,C0A660,C0A770,C0A860,C0A870,C0A880,C0A890,C0A920,C0A931,C0A940,C0A950,C0A970,C0A980,C0A9C0,C0A9F0,C0AC40,C0AC60,C0AC70,C0AC80,C0ACA0,C0AD00,C0AD10,C0AD30,C0AD40,C0AD50,C0AG80,C0AH00,C0AH10,C0AH30,C0AH40,C0AH50,C0AH70,C0AH80,C0AH90,C0AI00,C0AI10,C0AI20,C0AI30,C0AI40,C0AJ10,C0AJ20,C0AJ30,C0AJ40,C0AJ50,C0B010,C0B040,C0B050,C0C460,C0C480,C0C490,C0C590,C0C620,C0C630,C0C650,C0C660,C0C670,C0C680,C0C700,C0C710,C0C720,C0C730,C0C740,C1A630,C1A750,C1A760,C1A9N0,C1AC50,C1AI50,C1AI60,C1C510&elementName=RAIN&parameterName='
     location = requests.get(url_rain).json()['records']['location']
-    obs_rain_data_dict = {}
+    weather_obs_rain_dict = {}
     
     for i in location:
         lat = i['lat']
         lon = i['lon']  
         rain = i['weatherElement'][0]['elementValue']
         
-        obs_rain_data_dict[i['stationId']] = {
+        weather_obs_rain_dict[i['stationId']] = {
             'lat':lat,
             'lon':lon,
             'rain':rain,
         }
-    np.save('obs_rain_data_dict.npy',obs_rain_data_dict)
+    np.save('weather_obs_rain_dict.npy',weather_obs_rain_dict)
     print('save_obs_rain_data done')
-    #obs_rain_data_dict = np.load('obs_rain_data_dict.npy', allow_pickle=True).item()
+    #weather_obs_rain_dict = np.load('weather_obs_rain_dict.npy', allow_pickle=True).item()
 def save_obs_weather_data(): #局屬
     url_weather = 'https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=CWB-800E53EB-AF03-4977-99E7-0C1F2AE8BFB7&format=JSON&stationId=466850,466880,466900,466910,466920,466930,466940,467050&elementName=WDSD,TEMP,HUMD,VIS,Weather&parameterName='
     location = requests.get(url_weather).json()['records']['location']
-    obs_weather_data_dict = {}
+    weather_obs_weather_dict = {}
 
     for i in location:
         if i['lat'] > lat_limit:
@@ -696,33 +700,33 @@ def save_obs_weather_data(): #局屬
             lon = i['lon']
             weather = i['weatherElement'][4]['elementValue']  
             
-            obs_weather_data_dict[i['stationId']] = {
+            weather_obs_weather_dict[i['stationId']] = {
                 'lat':lat,
                 'lon':lon,
                 'weather':weather,
             }
       
-    np.save('obs_weather_data_dict.npy',obs_weather_data_dict)
+    np.save('weather_obs_weather_dict.npy',weather_obs_weather_dict)
     print('save_obs_weather_data done')
-    #obs_weather_data_dict = np.load('obs_weather_data_dict.npy', allow_pickle=True).item()
+    #weather_obs_weather_dict = np.load('weather_obs_weather_dict.npy', allow_pickle=True).item()
 def save_obs_aqi_data():
     url_aqi = 'https://data.epa.gov.tw/api/v2/aqx_p_432?api_key=668a6684-c173-483e-a05c-03b993655ce4'
     records = requests.get(url_aqi).json()['records']
-    obs_aqi_data_dict = {}
+    weather_obs_aqi_dict = {}
 
     for i in records:
         lat = i['latitude']
         lon = i['longitude']
         aqi = i['aqi']
         
-        obs_aqi_data_dict[i['siteid']] = {
+        weather_obs_aqi_dict[i['siteid']] = {
             'lat':lat,
             'lon':lon,
             'aqi':aqi,
         }
-    np.save('obs_aqi_data_dict.npy',obs_aqi_data_dict)
+    np.save('weather_obs_aqi_dict.npy',weather_obs_aqi_dict)
     print('save_obs_aqi_data done')
-    #obs_aqi_data_dict = np.load('obs_aqi_data_dict.npy', allow_pickle=True).item()
+    #weather_obs_aqi_dict = np.load('weather_obs_aqi_dict.npy', allow_pickle=True).item()
 """抓取forcast存為.npy檔"""
 def save_forcast_data():
     forcast_lon_lat_list = [
@@ -738,7 +742,7 @@ def save_forcast_data():
         [121.713442,24.942840],[121.593283,24.934158],[121.469331,25.133486],[121.619664,25.034164],[121.383836,25.064361],[121.087161,24.940081]
     ]
     for i in range(len(forcast_lon_lat_list)):#測站87
-        forcast_data_dict = {}
+        weather_forcast_dict = {}
         url_for = 'https://premium-weather-api.weatherrisk.com/future-3t/168hr-3km-model-forecast/{},{}'.format(str(forcast_lon_lat_list[i][1]), str(forcast_lon_lat_list[i][0]))
         requests_json = requests.get(url_for).json()
         data = requests_json['data']
@@ -751,7 +755,7 @@ def save_forcast_data():
             wdsd = data[idx]['wind_speed']                    #風速
             app_temp = str(1.07*float(temp)+(0.2*float(humd)/100*6.105*np.exp(17.27*float(temp)/(237.7+float(temp))))-0.65*float(wdsd)-2.7)
             
-            forcast_data_dict[str(i)+'_'+str(idx)] = {
+            weather_forcast_dict[str(i)+'_'+str(idx)] = {
                 'lat':requests_json['location'][1],
                 'lon':requests_json['location'][0],
                 'start_time':start_time,
@@ -762,26 +766,26 @@ def save_forcast_data():
                 'wdsd':wdsd,
                 'app_temp':app_temp,
             }
-    np.save('forcast_data_dict.npy',forcast_data_dict)
+    np.save('weather_forcast_dict.npy',weather_forcast_dict)
     print('save_forcast_data done')
-    #forcast_data_dict = np.load('forcast_data_dict.npy', allow_pickle=True).item()
+    #weather_forcast_dict = np.load('weather_forcast_dict.npy', allow_pickle=True).item()
 
-def get_weather_data(gogo_time, lon, lat):  
+def get_weather_data(user_time, gogo_time, lon, lat):  
     #到達站點時間 +0UTC
-    to_UTC = timedelta(hours=8)
-    gogo_time_UTC = datetime.strptime(gogo_time,'%Y-%m-%d %H:%M:%S') - to_UTC
+    gogo_time_UTC = datetime.strptime(gogo_time,'%Y-%m-%d %H:%M:%S') - timedelta(hours=8)
     gogo_time_new = str(gogo_time_UTC)[0:10]+ 'T' +str(gogo_time_UTC)[11:13]+ ':00:00+00:00'
     #現實世界時間 +0UTC
-    now_time = datetime.now()
+    now_time_UTC = datetime.now() - timedelta(hours=8)
 
     #選擇 觀測預報要用的比例 
-    delta_hour = (gogo_time_UTC - now_time).total_seconds / 3600
+    delta_hour = (gogo_time_UTC - now_time_UTC).total_seconds() / 3600
+    print('delta_hour', delta_hour)
     if 0 <= delta_hour < 6 :   #觀測預報線性加權              
         nowcast_ratio = np.exp(-0.5*delta_hour)
         obs_dict = {}
         
         # get wdsd temp humd app_temp
-        obs_data_dict = np.load('obs_temp_data_dict.npy', allow_pickle=True).item()
+        obs_data_dict = np.load('weather_obs_temp_dict.npy', allow_pickle=True).item()
         min_station_diff = 999999
         min_id_data = {}
         for _, id_data in obs_data_dict:
@@ -797,7 +801,7 @@ def get_weather_data(gogo_time, lon, lat):
         obs_dict['app_temp'] = min_id_data['app_temp']
                 
         # get rain
-        obs_data_dict = np.load('obs_rain_data_dict.npy', allow_pickle=True).item()
+        obs_data_dict = np.load('weather_obs_rain_dict.npy', allow_pickle=True).item()
         min_station_diff = 999999
         min_id_data = {}
         for _, id_data in obs_data_dict:
@@ -810,7 +814,7 @@ def get_weather_data(gogo_time, lon, lat):
         obs_dict['rain'] = min_id_data['rain']
         
         # get weather
-        obs_data_dict = np.load('obs_weather_data_dict.npy', allow_pickle=True).item()
+        obs_data_dict = np.load('weather_obs_weather_dict.npy', allow_pickle=True).item()
         min_station_diff = 999999
         min_id_data = {}
         for _, id_data in obs_data_dict:
@@ -823,7 +827,7 @@ def get_weather_data(gogo_time, lon, lat):
         obs_dict['weather'] = min_id_data['weather']
         
         # get aqi
-        obs_data_dict = np.load('obs_aqi_data_dict.npy', allow_pickle=True).item()
+        obs_data_dict = np.load('weather_obs_aqi_dict.npy', allow_pickle=True).item()
         min_station_diff = 999999
         min_id_data = {}
         for _, id_data in obs_data_dict:
@@ -835,12 +839,12 @@ def get_weather_data(gogo_time, lon, lat):
                 min_id_data = id_data
         obs_dict['aqi'] = min_id_data['aqi']
 
-        # get forcast_data_dict
+        # get weather_forcast_dict
         for_dict = {}
-        forcast_data_dict = np.load('forcast_data_dict.npy', allow_pickle=True).item()
+        weather_forcast_dict = np.load('weather_forcast_dict.npy', allow_pickle=True).item()
         #來找時間
         time_idx = -1
-        for id, id_data in forcast_data_dict:
+        for id, id_data in weather_forcast_dict:
             if id_data['start_time'] == gogo_time_new:
                 time_idx = id.split('_')[-1]
                 break
@@ -851,12 +855,12 @@ def get_weather_data(gogo_time, lon, lat):
         min_id_data = {}
         for i in range(87):
             name = '{}_{}'.format(str(i), str(time_idx))
-            i_lat = forcast_data_dict[name]['lat']
-            i_lon = forcast_data_dict[name]['lon']
+            i_lat = weather_forcast_dict[name]['lat']
+            i_lon = weather_forcast_dict[name]['lon']
             station_diff = np.sqrt( np.square(float(i_lon)-float(lon)) + np.square(float(i_lat)-float(lat)) )
             if station_diff < min_station_diff:
                 min_station_diff = station_diff
-                min_id_data = forcast_data_dict[name]
+                min_id_data = weather_forcast_dict[name]
         for_dict['rain'] = min_id_data['rain']
         for_dict['humd'] = min_id_data['humd']
         for_dict['temp'] = min_id_data['temp']
@@ -877,11 +881,11 @@ def get_weather_data(gogo_time, lon, lat):
         
         return hybrid_dict
     elif 6 <= delta_hour < 72 :  #全預報
-        # get forcast_data_dict
-        forcast_data_dict = np.load('forcast_data_dict.npy', allow_pickle=True).item()
+        # get weather_forcast_dict
+        weather_forcast_dict = np.load('weather_forcast_dict.npy', allow_pickle=True).item()
         #來找時間
         time_idx = -1
-        for id, id_data in forcast_data_dict:
+        for id, id_data in weather_forcast_dict:
             if id_data['start_time'] == gogo_time_new:
                 time_idx = id.split('_')[-1]
                 break
@@ -892,12 +896,12 @@ def get_weather_data(gogo_time, lon, lat):
         min_id_data = {}
         for i in range(87):
             name = '{}_{}'.format(str(i), str(time_idx))
-            i_lat = forcast_data_dict[name]['lat']
-            i_lon = forcast_data_dict[name]['lon']
+            i_lat = weather_forcast_dict[name]['lat']
+            i_lon = weather_forcast_dict[name]['lon']
             station_diff = np.sqrt( np.square(float(i_lon)-float(lon)) + np.square(float(i_lat)-float(lat)) )
             if station_diff < min_station_diff:
                 min_station_diff = station_diff
-                min_id_data = forcast_data_dict[name]
+                min_id_data = weather_forcast_dict[name]
         
         forcast_dict={}
         forcast_dict['rain'] = min_id_data['rain']
@@ -907,7 +911,10 @@ def get_weather_data(gogo_time, lon, lat):
         forcast_dict['wdsd'] = min_id_data['wdsd']
         forcast_dict['app_temp'] = min_id_data['app_temp']
         forcast_dict['aqi'] = None
+        
         return forcast_dict
+    else:
+        raise ValueError('delta_hour not in 0~72')
         
       
 """執行迴圈 *每10分鐘執行一次*"""
@@ -1051,7 +1058,7 @@ if __name__ == '__main__':
     #plot_traffic_data()
     #save_traffic_data()
     #lon, lat = 121.540672, 25.052168
-    #min_VD_id, min_VD_dict = get_traffic_data(lon, lat)
+    #min_VD_dict = get_traffic_data(lon, lat)
     #traffic_test()
     '''
     VLQLI40 {'lon': 121.54058, 'lat': 25.05369, 'RoadName': '龍江路', 'RoadClass': 6, 'LaneNum': 2, 'DataCollectTime': '2022-08-03T10:13:00+08:00', 'Volume': [4, 5, 2, 0], 'Speed': [12.25, 8.0, 16.5, 0.0]}
@@ -1063,7 +1070,10 @@ if __name__ == '__main__':
     #get_cwb_station_lonlat()
     #plot()
     #save_weather_data()
-    get_weather_data()
+    #lon, lat = 121.540672, 25.052168
+    #weather_dict = get_weather_data(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), lon, lat)
+    #print(weather_dict)
+    look_all_vd()
     
     # 地理
     #lon, lat = 121.540672, 25.052168
