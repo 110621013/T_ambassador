@@ -658,21 +658,22 @@ def save_obs_temp_data(): #局屬跟無人
     for url in url_list:
         location = requests.get(url).json()['records']['location']
         for i in location:
-            lat = i['lat']
-            lon = i['lon']  
-            wdsd = i['weatherElement'][0]['elementValue']
-            temp = i['weatherElement'][1]['elementValue']
-            humd = str(round(float(i['weatherElement'][2]['elementValue'])*100 ,1))
-            app_temp = str(1.07*float(temp)+(0.2*float(humd)/100*6.105*np.exp(17.27*float(temp)/(237.7+float(temp))))-0.65*float(wdsd)-2.7)
+            lat = float(i['lat'])
+            lon = float(i['lon'])
+            wdsd = float(i['weatherElement'][0]['elementValue'])
+            temp = float(i['weatherElement'][1]['elementValue'])
+            humd = float(str(round(float(i['weatherElement'][2]['elementValue'])*100 ,1)))
+            app_temp = 1.07*float(temp)+(0.2*float(humd)/100*6.105*np.exp(17.27*float(temp)/(237.7+float(temp))))-0.65*float(wdsd)-2.7
             
-            weather_obs_temp_dict[i['stationId']] = {
-                'lat':lat,
-                'lon':lon,
-                'wdsd':wdsd,
-                'temp':temp,
-                'humd':humd,
-                'app_temp':app_temp,
-            }
+            if wdsd >=0.0 and temp>=-98 and humd>=0.0:
+                weather_obs_temp_dict[i['stationId']] = {
+                    'lat':lat,
+                    'lon':lon,
+                    'wdsd':wdsd,
+                    'temp':temp,
+                    'humd':humd,
+                    'app_temp':app_temp,
+                }
     np.save('weather_obs_temp_dict.npy',weather_obs_temp_dict)
     print('save_obs_temp_data done')
     #weather_obs_temp_dict = np.load('weather_obs_temp_dict.npy', allow_pickle=True).item()
@@ -682,15 +683,18 @@ def save_obs_rain_data(): #雨量
     weather_obs_rain_dict = {}
     
     for i in location:
-        lat = i['lat']
-        lon = i['lon']  
-        rain = i['weatherElement'][0]['elementValue']
+        lat = float(i['lat'])
+        lon = float(i['lon'])
+        rain = float(i['weatherElement'][0]['elementValue'])
+        if rain == -998.0:
+            rain = 0.0
         
-        weather_obs_rain_dict[i['stationId']] = {
-            'lat':lat,
-            'lon':lon,
-            'rain':rain,
-        }
+        if rain>=0.0:
+            weather_obs_rain_dict[i['stationId']] = {
+                'lat':lat,
+                'lon':lon,
+                'rain':rain,
+            }
     np.save('weather_obs_rain_dict.npy',weather_obs_rain_dict)
     print('save_obs_rain_data done')
     #weather_obs_rain_dict = np.load('weather_obs_rain_dict.npy', allow_pickle=True).item()
@@ -701,15 +705,16 @@ def save_obs_weather_data(): #局屬
 
     for i in location:
         if float(i['lat']) > lat_limit:
-            lat = i['lat']
-            lon = i['lon']
+            lat = float(i['lat'])
+            lon = float(i['lon'])
             weather = i['weatherElement'][4]['elementValue']  
             
-            weather_obs_weather_dict[i['stationId']] = {
-                'lat':lat,
-                'lon':lon,
-                'weather':weather,
-            }
+            if weather != '':
+                weather_obs_weather_dict[i['stationId']] = {
+                    'lat':lat,
+                    'lon':lon,
+                    'weather':weather,
+                }
       
     np.save('weather_obs_weather_dict.npy',weather_obs_weather_dict)
     print('save_obs_weather_data done')
@@ -720,15 +725,18 @@ def save_obs_aqi_data():
     weather_obs_aqi_dict = {}
 
     for i in records:
-        lat = i['latitude']
-        lon = i['longitude']
-        aqi = i['aqi']
+        lat = float(i['latitude'])
+        lon = float(i['longitude'])
+        if i['aqi'] == '':
+            continue
+        aqi = float(i['aqi'])
         
-        weather_obs_aqi_dict[i['siteid']] = {
-            'lat':lat,
-            'lon':lon,
-            'aqi':aqi,
-        }
+        if aqi >= 0.0:
+            weather_obs_aqi_dict[i['siteid']] = {
+                'lat':lat,
+                'lon':lon,
+                'aqi':aqi,
+            }
     np.save('weather_obs_aqi_dict.npy',weather_obs_aqi_dict)
     print('save_obs_aqi_data done')
     #weather_obs_aqi_dict = np.load('weather_obs_aqi_dict.npy', allow_pickle=True).item()
@@ -754,11 +762,11 @@ def save_forcast_data():
         for idx in range(192): #權抓啦幹
             start_time = data[idx]['forecast_time']['start']  #預報的時間(一小時的開頭)
             rain = data[idx]['pcpn']                          #降雨量
-            humd = data[idx]['rh']                            #濕度
-            temp = data[idx]['tempture']                      #溫度
+            humd = data[idx]['rh']                            #濕度int
+            temp = data[idx]['tempture']                      #溫度int
             weather = data[idx]['weather_condition']          #天氣狀態(晴朗、晴時多雲、多雲時晴...)
             wdsd = data[idx]['wind_speed']                    #風速
-            app_temp = str(1.07*float(temp)+(0.2*float(humd)/100*6.105*np.exp(17.27*float(temp)/(237.7+float(temp))))-0.65*float(wdsd)-2.7)
+            app_temp = 1.07*float(temp)+(0.2*float(humd)/100*6.105*np.exp(17.27*float(temp)/(237.7+float(temp))))-0.65*float(wdsd)-2.7
             
             weather_forcast_dict[str(i)+'_'+str(idx)] = {
                 'lat':requests_json['location'][1],
