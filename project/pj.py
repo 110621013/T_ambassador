@@ -700,7 +700,7 @@ def save_obs_weather_data(): #局屬
     weather_obs_weather_dict = {}
 
     for i in location:
-        if i['lat'] > lat_limit:
+        if float(i['lat']) > lat_limit:
             lat = i['lat']
             lon = i['lon']
             weather = i['weatherElement'][4]['elementValue']  
@@ -752,6 +752,7 @@ def save_forcast_data():
         requests_json = requests.get(url_for).json()
         data = requests_json['data']
         for idx in range(192): #權抓啦幹
+            print(str(i)+'_'+str(idx))
             start_time = data[idx]['forecast_time']['start']  #預報的時間(一小時的開頭)
             rain = data[idx]['pcpn']                          #降雨量
             humd = data[idx]['rh']                            #濕度
@@ -931,10 +932,10 @@ def save_weather_data(gap_time=600.0):
         now_time_str = time.strftime('%Y/%m/%d_%H:%M', time.localtime(now_time))
         if now_time - start_time > gap_time :
             start_time = now_time
-            save_obs_temp_data()
-            save_obs_rain_data()
-            save_obs_weather_data()
-            save_obs_aqi_data()
+            #save_obs_temp_data()
+            #save_obs_rain_data()
+            #save_obs_weather_data()
+            #save_obs_aqi_data()
             save_forcast_data()
             print('抓資料執行ㄌ：', time.time()-start_time)
         else:
@@ -1061,7 +1062,7 @@ if __name__ == '__main__':
     #get_VDID_and_plot()
     #auto_get_traffic_api_and_save()
     #plot_traffic_data()
-    save_traffic_data()
+    #printsave_traffic_data()
     #lon, lat = 121.540672, 25.052168
     #min_VD_dict = get_traffic_data(lon, lat)
     #traffic_test()
@@ -1074,7 +1075,8 @@ if __name__ == '__main__':
     #xml_analysis() #雷達資料處裡
     #get_cwb_station_lonlat()
     #plot()
-    #save_weather_data()
+    save_weather_data()
+    
     #lon, lat = 121.540672, 25.052168
     #weather_dict = get_weather_data(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), lon, lat)
     #print(weather_dict)
