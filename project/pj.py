@@ -807,10 +807,10 @@ def get_weather_data(user_time, gogo_time, lon, lat):
     gogo_time_UTC = datetime.strptime(gogo_time,'%Y-%m-%d %H:%M:%S') - timedelta(hours=8)
     gogo_time_new = str(gogo_time_UTC)[0:10]+ 'T' +str(gogo_time_UTC)[11:13]+ ':00:00+00:00'
     #現實世界時間 +0UTC
-    now_time_UTC = datetime.now() - timedelta(hours=8)
+    #now_time_UTC = datetime.now() - timedelta(hours=8)
 
     #選擇 觀測預報要用的比例 
-    delta_hour = (gogo_time_UTC - now_time_UTC).total_seconds() / 3600
+    delta_hour = (gogo_time_UTC - user_time).total_seconds() / 3600
     print('delta_hour', delta_hour)
     if 0 <= delta_hour < 6 :   #觀測預報線性加權              
         nowcast_ratio = np.exp(-0.5*delta_hour)
@@ -820,7 +820,7 @@ def get_weather_data(user_time, gogo_time, lon, lat):
         obs_data_dict = np.load('weather_obs_temp_dict.npy', allow_pickle=True).item()
         min_station_diff = 999999
         min_id_data = {}
-        for _, id_data in obs_data_dict:
+        for _, id_data in obs_data_dict.items():
             i_lat = id_data['lat']
             i_lon = id_data['lon']
             station_diff = np.sqrt( np.square(float(i_lon)-float(lon)) + np.square(float(i_lat)-float(lat)) )
@@ -836,7 +836,7 @@ def get_weather_data(user_time, gogo_time, lon, lat):
         obs_data_dict = np.load('weather_obs_rain_dict.npy', allow_pickle=True).item()
         min_station_diff = 999999
         min_id_data = {}
-        for _, id_data in obs_data_dict:
+        for _, id_data in obs_data_dict.items():
             i_lat = id_data['lat']
             i_lon = id_data['lon']
             station_diff = np.sqrt( np.square(float(i_lon)-float(lon)) + np.square(float(i_lat)-float(lat)) )
@@ -849,7 +849,7 @@ def get_weather_data(user_time, gogo_time, lon, lat):
         obs_data_dict = np.load('weather_obs_weather_dict.npy', allow_pickle=True).item()
         min_station_diff = 999999
         min_id_data = {}
-        for _, id_data in obs_data_dict:
+        for _, id_data in obs_data_dict.items():
             i_lat = id_data['lat']
             i_lon = id_data['lon']
             station_diff = np.sqrt( np.square(float(i_lon)-float(lon)) + np.square(float(i_lat)-float(lat)) )
@@ -862,7 +862,7 @@ def get_weather_data(user_time, gogo_time, lon, lat):
         obs_data_dict = np.load('weather_obs_aqi_dict.npy', allow_pickle=True).item()
         min_station_diff = 999999
         min_id_data = {}
-        for _, id_data in obs_data_dict:
+        for _, id_data in obs_data_dict.items():
             i_lat = id_data['lat']
             i_lon = id_data['lon']
             station_diff = np.sqrt( np.square(float(i_lon)-float(lon)) + np.square(float(i_lat)-float(lat)) )
@@ -876,7 +876,7 @@ def get_weather_data(user_time, gogo_time, lon, lat):
         weather_forcast_dict = np.load('weather_forcast_dict.npy', allow_pickle=True).item()
         #來找時間
         time_idx = -1
-        for id, id_data in weather_forcast_dict:
+        for id, id_data in weather_forcast_dict.items():
             if id_data['start_time'] == gogo_time_new:
                 time_idx = id.split('_')[-1]
                 break
@@ -917,7 +917,7 @@ def get_weather_data(user_time, gogo_time, lon, lat):
         weather_forcast_dict = np.load('weather_forcast_dict.npy', allow_pickle=True).item()
         #來找時間
         time_idx = -1
-        for id, id_data in weather_forcast_dict:
+        for id, id_data in weather_forcast_dict.items():
             if id_data['start_time'] == gogo_time_new:
                 time_idx = id.split('_')[-1]
                 break
