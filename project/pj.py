@@ -390,6 +390,13 @@ def get_DataCollectTime_traffic_flow_county(access_token, county, VDid_list, tra
                 continue
             else:
                 mslt_v[k] /= mslt[k]
+        # check no neg
+        neg_flag = False
+        for k in range(4):
+            if mslt[k]<0 or mslt_v[k]<0.0:
+                neg_flag = True
+        if neg_flag:
+            continue
         traffic_dict[VDLives["VDID"]]['Volume'] = mslt
         traffic_dict[VDLives["VDID"]]['Speed'] = mslt_v
     return traffic_dict
@@ -421,6 +428,13 @@ def get_traffic_api_data_highway(access_token, VDid_list_highway, traffic_dict):
                         except KeyError: #沒車速
                             mslt[k] += lane_dict['Vehicles'][k]['Volume']
                             mslt_v = [-1.0, -1.0, -1.0, -1.0]
+            # check no neg
+            neg_flag = False
+            for k in range(4):
+                if mslt[k]<0 or mslt_v[k]<0.0:
+                    neg_flag = True
+            if neg_flag:
+                continue
 
             for k in range(4): #算加權平均車速
                 if mslt[k] != 0:
@@ -429,9 +443,6 @@ def get_traffic_api_data_highway(access_token, VDid_list_highway, traffic_dict):
             traffic_dict[VDLives["VDID"]]['Speed'] = mslt_v
         else:
             print('==> no', VDid_list_highway[i])
-            traffic_dict[VDid_list_highway[i]]["DataCollectTime"] = None
-            traffic_dict[VDid_list_highway[i]]["Volume"] = None
-            traffic_dict[VDid_list_highway[i]]["Speed"] = None
     return traffic_dict
 
 
@@ -606,8 +617,6 @@ def get_congestion_score(roadclass, totalspeed):
         if compared_thr_idx == 4:
             return congestion_score
     return congestion_score
-    
-    
     
 
 def xml_analysis():
@@ -1103,7 +1112,7 @@ if __name__ == '__main__':
     #get_VDID_and_plot()
     #auto_get_traffic_api_and_save()
     #plot_traffic_data()
-    #printsave_traffic_data()
+    #save_traffic_data()
     #lon, lat = 121.540672, 25.052168
     #min_VD_dict = get_traffic_data(lon, lat)
     #traffic_test()
@@ -1111,25 +1120,10 @@ if __name__ == '__main__':
     VLQLI40 {'lon': 121.54058, 'lat': 25.05369, 'RoadName': '龍江路', 'RoadClass': 6, 'LaneNum': 2, 'DataCollectTime': '2022-08-03T10:13:00+08:00', 'Volume': [4, 5, 2, 0], 'Speed': [12.25, 8.0, 16.5, 0.0]}
     VLQLI40 {'lon': 121.54058, 'lat': 25.05369, 'RoadName': '龍江路', 'RoadClass': 6, 'LaneNum': 2, 'DataCollectTime': '2022-08-03T10:24:00+08:00', 'Volume': [4, 2, 0, 0], 'Speed': [6.5, 19.0, 0.0, 0.0]}
     '''
-    #[70, 65, 60, 50]
     roadclass, totalspeed = 1, 75
     congestion_score = get_congestion_score(roadclass, totalspeed)
     print(congestion_score)
-    roadclass, totalspeed = 1, 68
-    congestion_score = get_congestion_score(roadclass, totalspeed)
-    print(congestion_score)
-    roadclass, totalspeed = 1, 61
-    congestion_score = get_congestion_score(roadclass, totalspeed)
-    print(congestion_score)
-    roadclass, totalspeed = 1, 55
-    congestion_score = get_congestion_score(roadclass, totalspeed)
-    print(congestion_score)
-    roadclass, totalspeed = 1, 50
-    congestion_score = get_congestion_score(roadclass, totalspeed)
-    print(congestion_score)
-    roadclass, totalspeed = 1, 49
-    congestion_score = get_congestion_score(roadclass, totalspeed)
-    print(congestion_score)
+
     # 天氣
     #xml_analysis() #雷達資料處裡
     #get_cwb_station_lonlat()
