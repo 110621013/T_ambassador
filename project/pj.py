@@ -746,8 +746,8 @@ def save_forcast_data():
         [121.221389,24.870056],[121.386560,25.028460],[121.256375,24.977661],[121.324975,24.892936],[121.239824,25.112692],[121.008581,24.966126],[121.114856,25.064764],[121.538622,24.771003],[121.646242,25.008720],
         [121.713442,24.942840],[121.593283,24.934158],[121.469331,25.133486],[121.619664,25.034164],[121.383836,25.064361],[121.087161,24.940081]
     ]
+    weather_forcast_dict = {}
     for i in range(len(forcast_lon_lat_list)):#測站87
-        weather_forcast_dict = {}
         url_for = 'https://premium-weather-api.weatherrisk.com/future-3t/168hr-3km-model-forecast/{},{}'.format(str(forcast_lon_lat_list[i][1]), str(forcast_lon_lat_list[i][0]))
         requests_json = requests.get(url_for).json()
         data = requests_json['data']
@@ -774,6 +774,25 @@ def save_forcast_data():
     np.save('weather_forcast_dict.npy',weather_forcast_dict)
     print('save_forcast_data done')
     #weather_forcast_dict = np.load('weather_forcast_dict.npy', allow_pickle=True).item()
+
+"""執行迴圈 *每10分鐘執行一次*"""
+def save_weather_data(gap_time=600.0):
+    start_time = 0.0
+
+    while True:
+        now_time = time.time() # float
+        now_time_str = time.strftime('%Y/%m/%d_%H:%M', time.localtime(now_time))
+        if now_time - start_time > gap_time :
+            save_obs_temp_data()
+            save_obs_rain_data()
+            save_obs_weather_data()
+            save_obs_aqi_data()
+            save_forcast_data()
+            print('抓資料執行ㄌ：', time.time()-start_time)
+            start_time = now_time
+        else:
+            time.sleep(10)
+            print(now_time_str)
 
 def get_weather_data(user_time, gogo_time, lon, lat):  
     #到達站點時間 +0UTC
@@ -920,25 +939,6 @@ def get_weather_data(user_time, gogo_time, lon, lat):
         return forcast_dict
     else:
         raise ValueError('delta_hour not in 0~72')
-        
-      
-"""執行迴圈 *每10分鐘執行一次*"""
-def save_weather_data(gap_time=600.0):
-    start_time = 0.0
-
-    while True:
-        now_time = time.time() # float
-        now_time_str = time.strftime('%Y/%m/%d_%H:%M', time.localtime(now_time))
-        if now_time - start_time > gap_time :
-            start_time = now_time
-            save_obs_temp_data()
-            save_obs_rain_data()
-            save_obs_weather_data()
-            save_obs_aqi_data()
-            save_forcast_data()
-            print('抓資料執行ㄌ：', time.time()-start_time)
-        else:
-            time.sleep(10)
 
 
 # 丹宇ㄉ地理資訊
