@@ -752,7 +752,6 @@ def save_forcast_data():
         requests_json = requests.get(url_for).json()
         data = requests_json['data']
         for idx in range(192): #權抓啦幹
-            print(str(i)+'_'+str(idx))
             start_time = data[idx]['forecast_time']['start']  #預報的時間(一小時的開頭)
             rain = data[idx]['pcpn']                          #降雨量
             humd = data[idx]['rh']                            #濕度
@@ -932,10 +931,10 @@ def save_weather_data(gap_time=600.0):
         now_time_str = time.strftime('%Y/%m/%d_%H:%M', time.localtime(now_time))
         if now_time - start_time > gap_time :
             start_time = now_time
-            #save_obs_temp_data()
-            #save_obs_rain_data()
-            #save_obs_weather_data()
-            #save_obs_aqi_data()
+            save_obs_temp_data()
+            save_obs_rain_data()
+            save_obs_weather_data()
+            save_obs_aqi_data()
             save_forcast_data()
             print('抓資料執行ㄌ：', time.time()-start_time)
         else:
