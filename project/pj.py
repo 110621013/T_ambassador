@@ -806,11 +806,12 @@ def get_weather_data(user_time, gogo_time, lon, lat):
     #到達站點時間 +0UTC
     gogo_time_UTC = datetime.strptime(gogo_time,'%Y-%m-%d %H:%M:%S') - timedelta(hours=8)
     gogo_time_new = str(gogo_time_UTC)[0:10]+ 'T' +str(gogo_time_UTC)[11:13]+ ':00:00+00:00'
+    user_time_UTC = user_time - timedelta(hours=8)
     #現實世界時間 +0UTC
     #now_time_UTC = datetime.now() - timedelta(hours=8)
 
     #選擇 觀測預報要用的比例 
-    delta_hour = (gogo_time_UTC - user_time).total_seconds() / 3600
+    delta_hour = (gogo_time_UTC - user_time_UTC).total_seconds() / 3600
     print('delta_hour', delta_hour)
     if 0 <= delta_hour < 6 :   #觀測預報線性加權              
         nowcast_ratio = np.exp(-0.5*delta_hour)
@@ -901,6 +902,12 @@ def get_weather_data(user_time, gogo_time, lon, lat):
         for_dict['app_temp'] = min_id_data['app_temp']
         for_dict['aqi'] = None
         
+        #print('---hybrid check---')
+        #for key, value in obs_dict.items():
+        #    print('obs_dict', key, value, type(value))
+        #for key, value in for_dict.items():
+        #    print('for_dict', key, value, type(value))
+        
         # 混合
         hybrid_dict = {}
         hybrid_dict['rain'] = float(obs_dict['rain'])*nowcast_ratio + float(for_dict['rain'])*(1-nowcast_ratio)
@@ -909,7 +916,7 @@ def get_weather_data(user_time, gogo_time, lon, lat):
         hybrid_dict['weather'] = obs_dict['weather'] if nowcast_ratio>=0.5 else for_dict['weather']
         hybrid_dict['wdsd'] = float(obs_dict['wdsd'])*nowcast_ratio + float(for_dict['wdsd'])*(1-nowcast_ratio)
         hybrid_dict['app_temp'] = float(obs_dict['app_temp'])*nowcast_ratio + float(for_dict['app_temp'])*(1-nowcast_ratio)
-        hybrid_dict['aqi'] = float(obs_dict['aqi']) if nowcast_ratio>=0.5 else None,
+        hybrid_dict['aqi'] = obs_dict['aqi'] if nowcast_ratio>=0.5 else None
         
         return hybrid_dict
     elif 6 <= delta_hour < 72 :  #全預報
@@ -936,12 +943,12 @@ def get_weather_data(user_time, gogo_time, lon, lat):
                 min_id_data = weather_forcast_dict[name]
         
         forcast_dict={}
-        forcast_dict['rain'] = min_id_data['rain']
-        forcast_dict['humd'] = min_id_data['humd']
-        forcast_dict['temp'] = min_id_data['temp']
+        forcast_dict['rain'] = float(min_id_data['rain'])
+        forcast_dict['humd'] = float(min_id_data['humd'])
+        forcast_dict['temp'] = float(min_id_data['temp'])
         forcast_dict['weather'] = min_id_data['weather']
-        forcast_dict['wdsd'] = min_id_data['wdsd']
-        forcast_dict['app_temp'] = min_id_data['app_temp']
+        forcast_dict['wdsd'] = float(min_id_data['wdsd'])
+        forcast_dict['app_temp'] = float(min_id_data['app_temp'])
         forcast_dict['aqi'] = None
         
         return forcast_dict
@@ -1082,11 +1089,14 @@ if __name__ == '__main__':
     #xml_analysis() #雷達資料處裡
     #get_cwb_station_lonlat()
     #plot()
-    save_weather_data()
+    #save_weather_data()
+    lon, lat = 121.540672, 25.052168
+    user_time = datetime.now()
+    gogo_time = user_time + timedelta(hours=1)
+    weather_dict = get_weather_data(user_time, gogo_time.strftime('%Y-%m-%d %H:%M:%S'), lon, lat)
     
-    #lon, lat = 121.540672, 25.052168
-    #weather_dict = get_weather_data(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), lon, lat)
-    #print(weather_dict)
+    for key, value in weather_dict.items():
+        print('weather_dict', key, value, type(value))
     #look_all_vd()
     
     # 地理
