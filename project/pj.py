@@ -390,13 +390,16 @@ def get_DataCollectTime_traffic_flow_county(access_token, county, VDid_list, tra
                 continue
             else:
                 mslt_v[k] /= mslt[k]
+                
         # check no neg
         neg_flag = False
         for k in range(4):
             if mslt[k]<0 or mslt_v[k]<0.0:
                 neg_flag = True
         if neg_flag:
+            del traffic_dict[VDLives["VDID"]]
             continue
+        
         traffic_dict[VDLives["VDID"]]['Volume'] = mslt
         traffic_dict[VDLives["VDID"]]['Speed'] = mslt_v
     return traffic_dict
@@ -434,6 +437,7 @@ def get_traffic_api_data_highway(access_token, VDid_list_highway, traffic_dict):
                 if mslt[k]<0 or mslt_v[k]<0.0:
                     neg_flag = True
             if neg_flag:
+                del traffic_dict[VDLives["VDID"]]
                 continue
 
             for k in range(4): #算加權平均車速
