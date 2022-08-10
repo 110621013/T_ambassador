@@ -109,10 +109,12 @@ def get_VDID_and_plot():
     '''
     
     # get api (建立新北/桃園/基隆所有VDs id文件)
+    '''
     api_url = 'https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/VD/City/NewTaipei?%24format=JSON'
     api_return_NewTaipei = requests.get(api_url, headers={'authorization': 'Bearer {}'.format(access_token)})
     api_return_NewTaipei_dict = api_return_NewTaipei.json()
     VDs_dict_NewTaipei = api_return_NewTaipei_dict['VDs']
+    '''
     
     api_url = 'https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/VD/City/Taoyuan?%24format=JSON'
     api_return_Taoyuan = requests.get(api_url, headers={'authorization': 'Bearer {}'.format(access_token)})
@@ -157,9 +159,9 @@ def get_VDID_and_plot():
     '''
     
     # 繪圖所有種類VDs
-    for VD_dict_highway in VDs_dict_highway:
-        plt.plot(VD_dict_highway['PositionLon'], VD_dict_highway['PositionLat'], 'o', color='green', markersize=2)
-    plt.plot(VD_dict_highway['PositionLon'], VD_dict_highway['PositionLat'], 'o', color='green', label='green highway', markersize=2)
+    #for VD_dict_highway in VDs_dict_highway:
+    #    plt.plot(VD_dict_highway['PositionLon'], VD_dict_highway['PositionLat'], 'o', color='green', markersize=2)
+    #plt.plot(VD_dict_highway['PositionLon'], VD_dict_highway['PositionLat'], 'o', color='green', label='green highway', markersize=2)
     
     for VD_dict_freeway in VDs_dict_freeway:
         plt.plot(VD_dict_freeway['PositionLon'], VD_dict_freeway['PositionLat'], 'o', color='blue', markersize=2)
@@ -168,10 +170,11 @@ def get_VDID_and_plot():
     for VD_dict_taipei in VDs_dict_taipei:
         plt.plot(VD_dict_taipei['PositionLon'], VD_dict_taipei['PositionLat'], 'o', color='red', markersize=2)
     plt.plot(VD_dict_taipei['PositionLon'], VD_dict_taipei['PositionLat'], 'o', color='red', label='red taipei', markersize=2)
-    
+    '''
     for VD_dict_NewTaipei in VDs_dict_NewTaipei:
         plt.plot(VD_dict_NewTaipei['PositionLon'], VD_dict_NewTaipei['PositionLat'], 'o', color='purple', markersize=2)
     plt.plot(VD_dict_NewTaipei['PositionLon'], VD_dict_NewTaipei['PositionLat'], 'o', color='purple', label='purple newtaipei', markersize=2)
+    '''
     for VD_dict_Taoyuan in VDs_dict_Taoyuan:
         plt.plot(VD_dict_Taoyuan['PositionLon'], VD_dict_Taoyuan['PositionLat'], 'o', color='orange', markersize=2)
     plt.plot(VD_dict_Taoyuan['PositionLon'], VD_dict_Taoyuan['PositionLat'], 'o', color='orange', label='orange Taoyuan', markersize=2)
@@ -197,11 +200,11 @@ def get_VDID_and_plot():
     
     plt.xlim(119, 123)
     plt.ylim(21.5, 25.5)
-    plt.savefig(os.path.join('.', 'project', 'vd_plot_taiwan_add_otherCity'))
+    plt.savefig(os.path.join('.', 'project', 'vd_plot_taiwan_add_otherCity_2'))
     
     plt.xlim(121.4, 121.7)
     plt.ylim(24.9, 25.2)
-    plt.savefig(os.path.join('.', 'project', 'vd_plot_taipei_add_otherCity'))
+    plt.savefig(os.path.join('.', 'project', 'vd_plot_taipei_add_otherCity_2'))
     
     plt.close()
     #plt.show()
@@ -434,7 +437,7 @@ def get_traffic_api_data_highway(access_token, VDid_list_highway, traffic_dict):
 
 #回傳：無，每五分鐘儲存一套各VD的經緯度跟車流資料
 def save_traffic_data(get_gap=300):
-    county_list = ['Taipei','NewTaipei','Taoyuan','Keelung']
+    county_list = ['Taipei','Taoyuan','Keelung'] #,'NewTaipei'
     traffic_dict = {}
     
     # get IDX access_token
@@ -576,6 +579,8 @@ def traffic_test():
         plt.plot(lon_list[i], lat_list[i], 'o', color='purple', markersize=4)
         plt.plot(min_VD_dict['lon'], min_VD_dict['lat'], 'o', color='red', markersize=4)
     plt.show()
+def plot_vd_time():
+    pass
 
 
 def xml_analysis():
@@ -1056,7 +1061,7 @@ if __name__ == '__main__':
     #get_VDID_and_plot()
     #auto_get_traffic_api_and_save()
     #plot_traffic_data()
-    #save_traffic_data()
+    save_traffic_data()
     #lon, lat = 121.540672, 25.052168
     #min_VD_dict = get_traffic_data(lon, lat)
     #traffic_test()
@@ -1073,7 +1078,7 @@ if __name__ == '__main__':
     #lon, lat = 121.540672, 25.052168
     #weather_dict = get_weather_data(datetime.now().strftime('%Y-%m-%d %H:%M:%S'), lon, lat)
     #print(weather_dict)
-    look_all_vd()
+    #look_all_vd()
     
     # 地理
     #lon, lat = 121.540672, 25.052168
