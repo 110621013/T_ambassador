@@ -582,6 +582,33 @@ def traffic_test():
 def plot_vd_time():
     pass
 
+#台北標準，其他縣市標準超爛= =
+def get_congestion_score(roadclass, totalspeed):
+    assert 0<=roadclass<=7
+    assert type(roadclass) == type(int(2))
+    assert totalspeed>=0.0
+    
+    congestion_standard = [
+        [40, 35, 30, 25],
+        [70, 65, 60, 50],
+        [40, 35, 30, 25],
+        [45, 40, 35, 30],
+        [70, 65, 60, 50],
+        [60, 58, 55, 50],
+        [35, 30, 25, 20],
+        [60, 35, 30, 25],
+    ]
+    congestion_score = 5
+    compared_thr_idx = 0
+    while totalspeed < congestion_standard[roadclass][compared_thr_idx]:
+        congestion_score -= 1
+        compared_thr_idx += 1
+        if compared_thr_idx == 4:
+            return congestion_score
+    return congestion_score
+    
+    
+    
 
 def xml_analysis():
     import xml.etree.ElementTree as ET
@@ -1084,19 +1111,38 @@ if __name__ == '__main__':
     VLQLI40 {'lon': 121.54058, 'lat': 25.05369, 'RoadName': '龍江路', 'RoadClass': 6, 'LaneNum': 2, 'DataCollectTime': '2022-08-03T10:13:00+08:00', 'Volume': [4, 5, 2, 0], 'Speed': [12.25, 8.0, 16.5, 0.0]}
     VLQLI40 {'lon': 121.54058, 'lat': 25.05369, 'RoadName': '龍江路', 'RoadClass': 6, 'LaneNum': 2, 'DataCollectTime': '2022-08-03T10:24:00+08:00', 'Volume': [4, 2, 0, 0], 'Speed': [6.5, 19.0, 0.0, 0.0]}
     '''
-    
+    #[70, 65, 60, 50]
+    roadclass, totalspeed = 1, 75
+    congestion_score = get_congestion_score(roadclass, totalspeed)
+    print(congestion_score)
+    roadclass, totalspeed = 1, 68
+    congestion_score = get_congestion_score(roadclass, totalspeed)
+    print(congestion_score)
+    roadclass, totalspeed = 1, 61
+    congestion_score = get_congestion_score(roadclass, totalspeed)
+    print(congestion_score)
+    roadclass, totalspeed = 1, 55
+    congestion_score = get_congestion_score(roadclass, totalspeed)
+    print(congestion_score)
+    roadclass, totalspeed = 1, 50
+    congestion_score = get_congestion_score(roadclass, totalspeed)
+    print(congestion_score)
+    roadclass, totalspeed = 1, 49
+    congestion_score = get_congestion_score(roadclass, totalspeed)
+    print(congestion_score)
     # 天氣
     #xml_analysis() #雷達資料處裡
     #get_cwb_station_lonlat()
     #plot()
     #save_weather_data()
+    '''
     lon, lat = 121.540672, 25.052168
     user_time = datetime.now()
     gogo_time = user_time + timedelta(hours=1)
     weather_dict = get_weather_data(user_time, gogo_time.strftime('%Y-%m-%d %H:%M:%S'), lon, lat)
-    
     for key, value in weather_dict.items():
         print('weather_dict', key, value, type(value))
+    '''
     #look_all_vd()
     
     # 地理
