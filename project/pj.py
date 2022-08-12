@@ -538,7 +538,8 @@ def save_traffic_data(get_gap=600):
             last_time = now_time
             print('抓資料執行ㄌ：', time.time()-start_time)
             #print('traffic_dict', traffic_dict)
-            np.save(os.path.join('.', 'traffic_dict.npy'), traffic_dict)
+            #np.save(os.path.join('.', 'traffic_dict.npy'), traffic_dict)
+            np.save(os.path.join('.', 'data', 'traffic_dict.npy'), traffic_dict)
         else:
             time.sleep(10)
             #print('--sleep--')
@@ -561,7 +562,8 @@ def plot_consider_vd():
 
 #回傳：最近一個VD的車流資訊(ID、路線方向、幾線道、路名、各車種(MSLT)數量)
 def get_traffic_data(lon, lat):
-    traffic_dict = np.load(os.path.join('.', 'traffic_dict.npy'), allow_pickle=True).item()
+    #traffic_dict = np.load(os.path.join('.', 'traffic_dict.npy'), allow_pickle=True).item()
+    traffic_dict = np.load(os.path.join('.', 'data', 'traffic_dict.npy'), allow_pickle=True).item()
     max_limit_range = 0.01
     
     min_location_diff = 99999
@@ -741,7 +743,8 @@ def save_obs_temp_data(): #局屬跟無人
                     'humd':humd,
                     'app_temp':app_temp,
                 }
-    np.save('weather_obs_temp_dict.npy',weather_obs_temp_dict)
+    #np.save('weather_obs_temp_dict.npy',weather_obs_temp_dict)
+    np.save(os.path.join('.', 'data', 'weather_obs_temp_dict.npy'),weather_obs_temp_dict)
     print('save_obs_temp_data done')
     #weather_obs_temp_dict = np.load('weather_obs_temp_dict.npy', allow_pickle=True).item()
 def save_obs_rain_data(): #雨量
@@ -762,7 +765,8 @@ def save_obs_rain_data(): #雨量
                 'lon':lon,
                 'rain':rain,
             }
-    np.save('weather_obs_rain_dict.npy',weather_obs_rain_dict)
+    #np.save('weather_obs_rain_dict.npy',weather_obs_rain_dict)
+    np.save(os.path.join('.', 'data', 'weather_obs_rain_dict.npy'),weather_obs_rain_dict)
     print('save_obs_rain_data done')
     #weather_obs_rain_dict = np.load('weather_obs_rain_dict.npy', allow_pickle=True).item()
 def save_obs_weather_data(): #局屬
@@ -783,7 +787,9 @@ def save_obs_weather_data(): #局屬
                     'weather':weather,
                 }
       
-    np.save('weather_obs_weather_dict.npy',weather_obs_weather_dict)
+    #np.save('weather_obs_weather_dict.npy',weather_obs_weather_dict)
+    np.save(os.path.join('.', 'data', 'weather_obs_weather_dict.npy'),weather_obs_weather_dict)
+    
     print('save_obs_weather_data done')
     #weather_obs_weather_dict = np.load('weather_obs_weather_dict.npy', allow_pickle=True).item()
 def save_obs_aqi_data():
@@ -804,7 +810,8 @@ def save_obs_aqi_data():
                 'lon':lon,
                 'aqi':aqi,
             }
-    np.save('weather_obs_aqi_dict.npy',weather_obs_aqi_dict)
+    #np.save('weather_obs_aqi_dict.npy',weather_obs_aqi_dict)
+    np.save(os.path.join('.', 'data', 'weather_obs_aqi_dict.npy'),weather_obs_aqi_dict)
     print('save_obs_aqi_data done')
     #weather_obs_aqi_dict = np.load('weather_obs_aqi_dict.npy', allow_pickle=True).item()
 """抓取forcast存為.npy檔"""
@@ -846,7 +853,8 @@ def save_forcast_data():
                 'wdsd':wdsd,
                 'app_temp':app_temp,
             }
-    np.save('weather_forcast_dict.npy',weather_forcast_dict)
+    #np.save('weather_forcast_dict.npy',weather_forcast_dict)
+    np.save(os.path.join('.', 'data', 'weather_forcast_dict.npy'),weather_forcast_dict)
     print('save_forcast_data done')
     #weather_forcast_dict = np.load('weather_forcast_dict.npy', allow_pickle=True).item()
 
