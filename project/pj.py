@@ -367,54 +367,57 @@ def plot_traffic_data():
     #print(now_time_df.head)
 
 
-#下載一次[新北 台北 桃園 基隆]的VD資料
-def get_DataCollectTime_traffic_flow_county(access_token, county, VDid_list, traffic_dict):
+#下載一次[台北 桃園 基隆]的VD資料 //新北 
+def get_DataCollectTime_traffic_flow_county(access_token, county, VDimfo_list, traffic_dict):
     print('--> getting', county)
     # 執行抓資料
-    for i in range(len(VDid_list)):
-        url = 'https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/Live/VD/City/{}/{}?%24format=JSON'.format(county, VDid_list[i])
+    for i in range(len(VDimfo_list)):
+        url = 'https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/Live/VD/City/{}/{}?%24format=JSON'.format(county, VDimfo_list[i]['id'])
         VDid_return_dict = requests.get(url, headers={'authorization': 'Bearer {}'.format(access_token)}).json() #網站所見之json
         #if i%100 == 0:
         #    print('i', i)
         VDLives = VDid_return_dict['VDLives'][0]
-        mslt = [0, 0, 0, 0]
-        mslt_v = [0.0, 0.0, 0.0, 0.0]
+        mslt, mslt_v = [0,0,0,0], [0.0,0.0,0.0,0.0]
         for j in range(len(VDLives["LinkFlows"])): #對每個LinkFlows
             for lane_dict in VDLives["LinkFlows"][j]["Lanes"]: #對每個Lane
                 for k in range(4): #對每個車種
                     mslt[k] += lane_dict['Vehicles'][k]['Volume']
-                    mslt_v[k] += lane_dict['Vehicles'][k]['Speed'] * lane_dict['Vehicles'][k]['Volume']
-                                                
-        # check no neg
-        neg_flag = False
+                    mslt_v[k] += lane_dict['Vehicles'][k]['Speed']*lane_dict['Vehicles'][k]['Volume']
+        
+        # check if neg/gogo
+        gogo_flag = True
         for k in range(4):
             if mslt[k]<0 or mslt_v[k]<0.0:
-                neg_flag = True
+                gogo_flag = False
+                break
+            elif mslt[k] == 0:
+                continue
+            else:
+                mslt_v[k] /= mslt[k]
         
-        if neg_flag:
-            print('del', county, VDLives["VDID"], mslt, mslt_v)
-            del traffic_dict[VDLives["VDID"]]
-        else:
-            for k in range(4): #算加權平均車速
-                if mslt[k] == 0:
-                    continue
-                else:
-                    mslt_v[k] /= mslt[k]
-            
-            print(county, VDLives["VDID"], mslt, mslt_v)
+        if gogo_flag:
+            print('ok', county, VDLives["VDID"], mslt, mslt_v)
+            traffic_dict[VDLives["VDID"]] = {}
+            traffic_dict[VDLives["VDID"]]['lon'] = VDimfo_list[i]['lon']
+            traffic_dict[VDLives["VDID"]]['lat'] = VDimfo_list[i]['lat']
+            traffic_dict[VDLives["VDID"]]['RoadName'] = VDimfo_list[i]['RoadName']
+            traffic_dict[VDLives["VDID"]]['RoadClass'] = VDimfo_list[i]['RoadClass']
+            traffic_dict[VDLives["VDID"]]['LaneNum'] = VDimfo_list[i]['LaneNum']
             
             traffic_dict[VDLives["VDID"]]['Volume'] = mslt
             traffic_dict[VDLives["VDID"]]['Speed'] = mslt_v
             traffic_dict[VDLives["VDID"]]["DataCollectTime"] = VDLives["DataCollectTime"]
+        else:
+            print('not ok', county, VDLives["VDID"], mslt, mslt_v)
     return traffic_dict
 
 #下載一次省道的VD資料
-def get_traffic_api_data_highway(access_token, VDid_list_highway, traffic_dict):
+def get_traffic_api_data_highway(access_token, VDimfo_list_highway, traffic_dict):
     print('--> getting highway')
     # 執行抓資料
             
-    for i in range(len(VDid_list_highway)):
-        url = 'https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/Live/VD/Highway/{}?%24format=JSON'.format(VDid_list_highway[i])
+    for i in range(len(VDimfo_list_highway)):
+        url = 'https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/Live/VD/Highway/{}?%24format=JSON'.format(VDimfo_list_highway[i]['id'])
         VDid_return_dict = requests.get(url, headers={'authorization': 'Bearer {}'.format(access_token)}).json() #網站所見之json
         #if i%100 == 0:
         #    print('i', i)
@@ -422,48 +425,50 @@ def get_traffic_api_data_highway(access_token, VDid_list_highway, traffic_dict):
         # 有可能有VDid_return_dict['VDLives']沒東西的問題
         if VDid_return_dict['VDLives']:
             VDLives = VDid_return_dict['VDLives'][0]
-            
-            mslt = [0, 0, 0, 0]
-            mslt_v = [0.0, 0.0, 0.0, 0.0]
+            mslt, mslt_v = [0,0,0,0], [0.0,0.0,0.0,0.0]
             for j in range(len(VDLives["LinkFlows"])): #對每個LinkFlows
                 for lane_dict in VDLives["LinkFlows"][j]["Lanes"]: #對每個Lane
                     for k in range(len(lane_dict['Vehicles'])): #對每個車種
                         try:
                             mslt[k] += lane_dict['Vehicles'][k]['Volume']
-                            mslt_v[k] += lane_dict['Vehicles'][k]['Speed'] * lane_dict['Vehicles'][k]['Volume']
+                            mslt_v[k] += lane_dict['Vehicles'][k]['Speed']*lane_dict['Vehicles'][k]['Volume']
                         except KeyError: #沒車速
                             mslt[k] += lane_dict['Vehicles'][k]['Volume']
                             mslt_v[k] = -1.0
             
-            # check no neg
-            neg_flag = False
+            # check if neg/gogo
+            gogo_flag = True
             for k in range(4):
                 if mslt[k]<0 or mslt_v[k]<0.0:
-                    neg_flag = True
-            
-            if neg_flag:
-                print('del', VDLives["VDID"], mslt, mslt_v)
-                try:
-                    del traffic_dict[VDLives["VDID"]]
-                except KeyError:
-                    print('del KeyError!!!!!!!!!!!!', VDLives["VDID"])
-            else:
-                for k in range(4): #算加權平均車速
-                    if mslt[k] != 0:
-                        mslt_v[k] /= mslt[k]
-                print(VDLives["VDID"], mslt, mslt_v)
+                    gogo_flag = False
+                    break
+                elif mslt[k] == 0:
+                    continue
+                else:
+                    mslt_v[k] /= mslt[k]
+                
+            if gogo_flag:
+                print('ok', VDLives["VDID"], mslt, mslt_v)
+                traffic_dict[VDLives["VDID"]] = {}
+                traffic_dict[VDLives["VDID"]]['lon'] = VDimfo_list_highway[i]['lon']
+                traffic_dict[VDLives["VDID"]]['lat'] = VDimfo_list_highway[i]['lat']
+                traffic_dict[VDLives["VDID"]]['RoadName'] = VDimfo_list_highway[i]['RoadName']
+                traffic_dict[VDLives["VDID"]]['RoadClass'] = VDimfo_list_highway[i]['RoadClass']
+                traffic_dict[VDLives["VDID"]]['LaneNum'] = VDimfo_list_highway[i]['LaneNum']
+                
                 traffic_dict[VDLives["VDID"]]['Volume'] = mslt
                 traffic_dict[VDLives["VDID"]]['Speed'] = mslt_v
                 traffic_dict[VDLives["VDID"]]["DataCollectTime"] = VDLives["DataCollectTime"]
+            else:
+                print('not ok', VDLives["VDID"], mslt, mslt_v)
         else:
-            print('==> no', VDid_list_highway[i])
+            print('==> no', VDimfo_list_highway[i]['id'])
     return traffic_dict
 
 
 #回傳：無，每五分鐘儲存一套各VD的經緯度跟車流資料
 def save_traffic_data(get_gap=600):
     county_list = ['Taipei','Taoyuan','Keelung'] #,'NewTaipei'
-    traffic_dict = {}
     
     # get IDX access_token
     headers = {'content-type': 'application/x-www-form-urlencoded'}
@@ -475,32 +480,32 @@ def save_traffic_data(get_gap=600):
     post_return = requests.post('https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token', headers=headers, data=data)
     access_token = post_return.json()['access_token']
     
-    # get all county VDid_list
+    # get all county VDimfo_list(所有應該對的VD列表靜態資料)
     county_dict = {}
     for county in county_list:
-        VDid_list = []
+        VDimfo_list = []
         api_url_county = 'https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/VD/City/{}?%24format=JSON'.format(county)
         api_return_county = requests.get(api_url_county, headers={'authorization': 'Bearer {}'.format(access_token)})
         api_return_county_dict = api_return_county.json()
         VDs_list_county = api_return_county_dict['VDs']
         for VD_dict_county in VDs_list_county:
-            VDid_list.append(VD_dict_county['VDID'])
-            
-            traffic_dict[VD_dict_county['VDID']] = {}
-            
-            traffic_dict[VD_dict_county['VDID']]['lon'] = VD_dict_county['PositionLon']
-            traffic_dict[VD_dict_county['VDID']]['lat'] = VD_dict_county['PositionLat']
-            traffic_dict[VD_dict_county['VDID']]['RoadName'] = VD_dict_county['RoadName']
-            traffic_dict[VD_dict_county['VDID']]['RoadClass'] = VD_dict_county['RoadClass']
+            VDimfo = {}
+            VDimfo['id'] = VD_dict_county['VDID']
+            VDimfo['lon'] = VD_dict_county['PositionLon']
+            VDimfo['lat'] = VD_dict_county['PositionLat']
+            VDimfo['RoadName'] = VD_dict_county['RoadName']
+            VDimfo['RoadClass'] = VD_dict_county['RoadClass']
             total_LaneNum = 0
             for DetectionLinks_dict in VD_dict_county['DetectionLinks']:
                 total_LaneNum += DetectionLinks_dict['LaneNum']
-            traffic_dict[VD_dict_county['VDID']]['LaneNum'] = total_LaneNum
-        county_dict[county] = VDid_list
-        print(county, len(VDid_list))
+            VDimfo['LaneNum'] = total_LaneNum
+            VDimfo_list.append(VDimfo)
+            
+        county_dict[county] = VDimfo_list
+        print(county, len(VDimfo_list))
         
-    # get highway VDid_list
-    VDid_list_highway = []
+    # get highway VDimfo_list(所有應該對的VD列表靜態資料)
+    VDimfo_list_highway = []
     api_url_highway =   'https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/VD/Highway?%24format=JSON'
     api_return_highway = requests.get(api_url_highway, headers={'authorization': 'Bearer {}'.format(access_token)})
     api_return_dict_highway = api_return_highway.json()
@@ -508,19 +513,18 @@ def save_traffic_data(get_gap=600):
     # 緯度過24.5
     for VD_dict_highway in VDs_list_highway:
         if VD_dict_highway['PositionLat'] > lat_limit:
-            VDid_list_highway.append(VD_dict_highway['VDID'])
-            
-            traffic_dict[VD_dict_highway['VDID']] = {}
-            
-            traffic_dict[VD_dict_highway['VDID']]['lon'] = VD_dict_highway['PositionLon']
-            traffic_dict[VD_dict_highway['VDID']]['lat'] = VD_dict_highway['PositionLat']
-            traffic_dict[VD_dict_highway['VDID']]['RoadName'] = VD_dict_highway['RoadName']
-            traffic_dict[VD_dict_highway['VDID']]['RoadClass'] = VD_dict_highway['RoadClass']
+            VDimfo = {}
+            VDimfo['id'] = VD_dict_highway['VDID']
+            VDimfo['lon'] = VD_dict_highway['PositionLon']
+            VDimfo['lat'] = VD_dict_highway['PositionLat']
+            VDimfo['RoadName'] = VD_dict_highway['RoadName']
+            VDimfo['RoadClass'] = VD_dict_highway['RoadClass']
             total_LaneNum = 0
             for DetectionLinks_dict in VD_dict_highway['DetectionLinks']:
                 total_LaneNum += DetectionLinks_dict['LaneNum']
-            traffic_dict[VD_dict_highway['VDID']]['LaneNum'] = total_LaneNum
-    print('highway', len(VDid_list_highway))
+            VDimfo['LaneNum'] = total_LaneNum
+            VDimfo_list_highway.append(VDimfo)
+    print('highway', len(VDimfo_list_highway))
 
     #print('gogo:')
     last_time = 0.0
@@ -529,20 +533,57 @@ def save_traffic_data(get_gap=600):
         now_time_str = time.strftime('%Y_%m_%d-%H:%M', time.localtime(now_time))
         print(now_time_str)
         if now_time - last_time > get_gap: # 執行抓資料
+            traffic_dict = {}
             start_time = time.time()
-            # county data
-            for county, VDid_list in county_dict.items():
-                traffic_dict = get_DataCollectTime_traffic_flow_county(access_token, county, VDid_list, traffic_dict)
+            
+            # county data county_dict[county] = VDimfo_list
+            for county, VDimfo_list in county_dict.items():
+                traffic_dict = get_DataCollectTime_traffic_flow_county(access_token, county, VDimfo_list, traffic_dict)
             # highway data
-            traffic_dict = get_traffic_api_data_highway(access_token, VDid_list_highway, traffic_dict)
+            traffic_dict = get_traffic_api_data_highway(access_token, VDimfo_list_highway, traffic_dict)
+            print('---> traffic_dict len:', len(traffic_dict.values()))
             last_time = now_time
             print('抓資料執行ㄌ：', time.time()-start_time)
             #print('traffic_dict', traffic_dict)
-            #np.save(os.path.join('.', 'traffic_dict.npy'), traffic_dict)
-            np.save(os.path.join('.', 'data', 'traffic_dict.npy'), traffic_dict)
+            np.save(os.path.join('.', 'traffic_dict.npy'), traffic_dict)
+            #np.save(os.path.join('.', 'data', 'traffic_dict.npy'), traffic_dict)
+            
+            traffic_dict = np.load(os.path.join('.', 'traffic_dict.npy'), allow_pickle=True).item()
+            #直接算分數
+            traffic_score = {}
+            for vdid, vdlive in traffic_dict.items():
+                traffic_score[vdid] = {}
+                # lon, lat
+                traffic_score[vdid]['lon'] = vdlive['lon']
+                traffic_score[vdid]['lat'] = vdlive['lat']
+                # avgspeed_score
+                avgspeed = 0.0
+                Volume_sum = 0
+                for i in range(4):
+                    avgspeed += vdlive['Volume'][i]*vdlive['Speed'][i]
+                    Volume_sum += vdlive['Volume'][i]
+                
+                if Volume_sum == 0:
+                    traffic_score[vdid]['avgspeed_score'] = 5
+                else:
+                    avgspeed /= Volume_sum
+                    traffic_score[vdid]['avgspeed_score'] = get_congestion_score(vdlive['RoadClass'], avgspeed)
+                
+                # if_large_car_score
+                if vdlive['Volume'][2] != 0 or vdlive['Volume'][3] != 0:
+                    traffic_score[vdid]['if_large_car_score'] = 1
+                else:
+                    traffic_score[vdid]['if_large_car_score'] = 5
+            np.save(os.path.join('.', 'traffic_score.npy'), traffic_score)
+            print('np.save traffic_score')
         else:
             time.sleep(10)
             #print('--sleep--')
+
+def test():
+    traffic_dict = np.load(os.path.join('.', 'traffic_dict.npy'), allow_pickle=True).item()
+    for key, value in traffic_dict.items():
+        print(key, value)
 
 def plot_consider_vd():
     traffic_dict = np.load(os.path.join('.', 'traffic_dict.npy'), allow_pickle=True).item()
@@ -562,8 +603,8 @@ def plot_consider_vd():
 
 #回傳：最近一個VD的車流資訊(ID、路線方向、幾線道、路名、各車種(MSLT)數量)
 def get_traffic_data(lon, lat):
-    #traffic_dict = np.load(os.path.join('.', 'traffic_dict.npy'), allow_pickle=True).item()
-    traffic_dict = np.load(os.path.join('.', 'data', 'traffic_dict.npy'), allow_pickle=True).item()
+    traffic_dict = np.load(os.path.join('.', 'traffic_dict.npy'), allow_pickle=True).item()
+    #traffic_dict = np.load(os.path.join('.', 'data', 'traffic_dict.npy'), allow_pickle=True).item()
     max_limit_range = 0.01
     
     min_location_diff = 99999
@@ -577,6 +618,22 @@ def get_traffic_data(lon, lat):
     if min_location_diff > max_limit_range:
         return None
     return min_VD_dict
+#回傳最近一個VD的分數list
+def get_traffic_score(lon, lat):
+    traffic_score = np.load(os.path.join('.', 'traffic_score.npy'), allow_pickle=True).item()
+    max_limit_range = 0.01
+    min_location_diff = 99999
+    min_VD_dict = {}
+    for _, traffic_score_dict in traffic_score.items():
+        location_diff = ((lon-traffic_score_dict['lon'])**2 + (lat-traffic_score_dict['lat'])**2)**0.5
+        if location_diff < min_location_diff:
+            min_VD_dict = traffic_score_dict
+            min_location_diff = location_diff
+    #print(min_VD_dict)
+    if min_location_diff > max_limit_range:
+        return None
+    return [min_VD_dict['avgspeed_score'], min_VD_dict['if_large_car_score']]
+
 
 def look_all_vd():
     traffic_dict = np.load(os.path.join('.', 'traffic_dict.npy'), allow_pickle=True).item()
@@ -877,7 +934,7 @@ def save_weather_data(gap_time=600.0):
             time.sleep(10)
             print(now_time_str)
 
-def get_weather_data(user_time, gogo_time, lon, lat):  
+def get_weather_data(user_time, gogo_time, lon, lat):
     #到達站點時間 +0UTC
     gogo_time_UTC = datetime.strptime(gogo_time,'%Y-%m-%d %H:%M:%S') - timedelta(hours=8)
     gogo_time_new = str(gogo_time_UTC)[0:10]+ 'T' +str(gogo_time_UTC)[11:13]+ ':00:00+00:00'
@@ -888,7 +945,7 @@ def get_weather_data(user_time, gogo_time, lon, lat):
     #選擇 觀測預報要用的比例 
     delta_hour = (gogo_time_UTC - user_time_UTC).total_seconds() / 3600
     print('delta_hour', delta_hour)
-    if 0.001 <= delta_hour < 6 :   #觀測預報線性加權              
+    if -0.001 <= delta_hour < 6 :   #觀測預報線性加權              
         nowcast_ratio = np.exp(-0.5*delta_hour)
         obs_dict = {}
         
@@ -1029,7 +1086,66 @@ def get_weather_data(user_time, gogo_time, lon, lat):
         return forcast_dict
     else:
         raise ValueError('delta_hour not in 0~72')
-
+def get_weather_score(user_time, gogo_time, lon, lat):
+    weather_score_list = []
+    weather_dict = get_weather_data(user_time, gogo_time, lon, lat)
+    
+    # app_temp
+    app_temp = weather_dict['app_temp']
+    if app_temp >= 37:
+        weather_score_list.append(1)
+    elif 34 <= app_temp < 37:
+        weather_score_list.append(2)
+    elif 30 <= app_temp < 34:
+        weather_score_list.append(3)
+    elif 26 <= app_temp < 30:
+        weather_score_list.append(4)
+    elif 22 <= app_temp < 26:
+        weather_score_list.append(5)
+    elif 19 <= app_temp < 22:
+        weather_score_list.append(4)
+    elif 16 <= app_temp < 19:
+        weather_score_list.append(3)
+    elif 11 <= app_temp < 16:
+        weather_score_list.append(2)
+    elif app_temp < 11:
+        weather_score_list.append(1)
+    
+    # wdsd
+    wdsd = weather_dict['wdsd']
+    if wdsd >= 10.8:
+        weather_score_list.append(1)
+    else:
+        weather_score_list.append(5)
+        
+    # aqi
+    aqi = weather_dict['aqi']
+    if aqi != None:
+        if 0 <= aqi < 40:
+            weather_score_list.append(5)
+        elif 40 <= aqi < 80:
+            weather_score_list.append(4)
+        elif 80 <= aqi < 120:
+            weather_score_list.append(3)
+        elif 120 <= aqi < 160:
+            weather_score_list.append(2)
+        elif 160 <= aqi:
+            weather_score_list.append(1)
+    
+    # rain
+    rain = weather_dict['rain']
+    if rain == 0.0:
+        weather_score_list.append(5)
+    elif 0.0 <= rain < 10.0:
+        weather_score_list.append(4)
+    elif 10.0 <= rain < 20.0:
+        weather_score_list.append(3)
+    elif 20.0 <= rain < 30.0:
+        weather_score_list.append(2)
+    elif 30.0 <= rain:
+        weather_score_list.append(1)
+    
+    return weather_score_list
 
 # 丹宇ㄉ地理資訊
 def get_geo_data(lon, lat, hourly_rainfall):
@@ -1152,9 +1268,14 @@ if __name__ == '__main__':
     #auto_get_traffic_api_and_save()
     #plot_traffic_data()
     #save_traffic_data()
-    plot_consider_vd()
-    #lon, lat = 121.540672, 25.052168
+    #test()
+    #plot_consider_vd()
+    '''
+    lon, lat = 121.540672, 25.052168
     #min_VD_dict = get_traffic_data(lon, lat)
+    traffic_score_list = get_traffic_score(lon, lat)
+    print(traffic_score_list)
+    '''
     #traffic_test()
     '''
     VLQLI40 {'lon': 121.54058, 'lat': 25.05369, 'RoadName': '龍江路', 'RoadClass': 6, 'LaneNum': 2, 'DataCollectTime': '2022-08-03T10:13:00+08:00', 'Volume': [4, 5, 2, 0], 'Speed': [12.25, 8.0, 16.5, 0.0]}
@@ -1169,14 +1290,24 @@ if __name__ == '__main__':
     #get_cwb_station_lonlat()
     #plot()
     #save_weather_data()
-    '''
+    
     lon, lat = 121.540672, 25.052168
     user_time = datetime.now()
+    
     gogo_time = user_time + timedelta(hours=1)
     weather_dict = get_weather_data(user_time, gogo_time.strftime('%Y-%m-%d %H:%M:%S'), lon, lat)
     for key, value in weather_dict.items():
-        print('weather_dict', key, value, type(value))
-    '''
+        print('1h', key, value, type(value))
+    weather_score_list = get_weather_score(user_time, gogo_time.strftime('%Y-%m-%d %H:%M:%S'), lon, lat)
+    print(weather_score_list)
+    
+    gogo_time = user_time + timedelta(hours=9)
+    weather_dict = get_weather_data(user_time, gogo_time.strftime('%Y-%m-%d %H:%M:%S'), lon, lat)
+    for key, value in weather_dict.items():
+        print('9h', key, value, type(value))
+    weather_score_list = get_weather_score(user_time, gogo_time.strftime('%Y-%m-%d %H:%M:%S'), lon, lat)
+    print(weather_score_list)
+    
     #look_all_vd()
     
     # 地理
