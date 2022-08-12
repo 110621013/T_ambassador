@@ -880,7 +880,7 @@ def get_weather_data(user_time, gogo_time, lon, lat):
     #選擇 觀測預報要用的比例 
     delta_hour = (gogo_time_UTC - user_time_UTC).total_seconds() / 3600
     print('delta_hour', delta_hour)
-    if 0 <= delta_hour < 6 :   #觀測預報線性加權              
+    if 0.001 <= delta_hour < 6 :   #觀測預報線性加權              
         nowcast_ratio = np.exp(-0.5*delta_hour)
         obs_dict = {}
         
