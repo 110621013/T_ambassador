@@ -835,7 +835,9 @@ def save_obs_weather_data(): #局屬
         if float(i['lat']) > lat_limit:
             lat = float(i['lat'])
             lon = float(i['lon'])
-            weather = i['weatherElement'][4]['elementValue']  
+            weather = i['weatherElement'][4]['elementValue']
+            
+            weather = change_obs_weather(weather)
             
             if weather != '':
                 weather_obs_weather_dict[i['stationId']] = {
@@ -933,6 +935,23 @@ def save_weather_data(gap_time=600.0):
         else:
             time.sleep(10)
             print(now_time_str)
+
+def change_obs_weather(weather):
+    sunny = ['晴','晴有霾','晴有靄','晴有霧','晴朗']
+    cloudy = ['多雲','多雲有霾','多雲有靄','多雲有霧','多雲有雷','多雲有閃電','多雲雷聲','多雲']
+    overcast = ['陰','陰有雷','陰有閃電','陰有雷聲','陰']
+    rainy_1 = ['多雲有雨','陰有雨','細雨']
+    rainy_2 = ['多雲有陣雨','陰有陣雨','小雨']
+    rainy_3 = ['多雲有雷雨','陰有雷雨','中雨']
+    rainy_4 = ['多雲大雷雨','陰大雷雨','大雨']
+    hail = ['陰有雹','陰有雷雹','陰大雷雹','有冰雹']
+    weather_list=[sunny,cloudy,overcast,rainy_1,rainy_2,rainy_3,rainy_4,hail]
+
+    for weather_type in weather_list:
+        for weather_type2 in weather_type:
+            if weather_type2 == weather :
+                weather = weather_type[-1]
+                return(weather)
 
 def get_weather_data(user_time, gogo_time, lon, lat):
     #到達站點時間 +0UTC
