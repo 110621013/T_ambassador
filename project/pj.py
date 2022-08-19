@@ -801,7 +801,7 @@ def save_obs_temp_data(): #局屬跟無人
                     'app_temp':app_temp,
                 }
     #np.save('weather_obs_temp_dict.npy',weather_obs_temp_dict)
-    np.save(os.path.join('.', 'data', 'weather_obs_temp_dict.npy'),weather_obs_temp_dict)
+    np.save(os.path.join('.', 'weather_obs_temp_dict.npy'),weather_obs_temp_dict)
     print('save_obs_temp_data done')
     #weather_obs_temp_dict = np.load('weather_obs_temp_dict.npy', allow_pickle=True).item()
 def save_obs_rain_data(): #雨量
@@ -823,7 +823,7 @@ def save_obs_rain_data(): #雨量
                 'rain':rain,
             }
     #np.save('weather_obs_rain_dict.npy',weather_obs_rain_dict)
-    np.save(os.path.join('.', 'data', 'weather_obs_rain_dict.npy'),weather_obs_rain_dict)
+    np.save(os.path.join('.', 'weather_obs_rain_dict.npy'),weather_obs_rain_dict)
     print('save_obs_rain_data done')
     #weather_obs_rain_dict = np.load('weather_obs_rain_dict.npy', allow_pickle=True).item()
 def save_obs_weather_data(): #局屬
@@ -847,7 +847,7 @@ def save_obs_weather_data(): #局屬
                 }
       
     #np.save('weather_obs_weather_dict.npy',weather_obs_weather_dict)
-    np.save(os.path.join('.', 'data', 'weather_obs_weather_dict.npy'),weather_obs_weather_dict)
+    np.save(os.path.join('.', 'weather_obs_weather_dict.npy'),weather_obs_weather_dict)
     
     print('save_obs_weather_data done')
     #weather_obs_weather_dict = np.load('weather_obs_weather_dict.npy', allow_pickle=True).item()
@@ -870,7 +870,7 @@ def save_obs_aqi_data():
                 'aqi':aqi,
             }
     #np.save('weather_obs_aqi_dict.npy',weather_obs_aqi_dict)
-    np.save(os.path.join('.', 'data', 'weather_obs_aqi_dict.npy'),weather_obs_aqi_dict)
+    np.save(os.path.join('.', 'weather_obs_aqi_dict.npy'),weather_obs_aqi_dict)
     print('save_obs_aqi_data done')
     #weather_obs_aqi_dict = np.load('weather_obs_aqi_dict.npy', allow_pickle=True).item()
 """抓取forcast存為.npy檔"""
@@ -913,9 +913,29 @@ def save_forcast_data():
                 'app_temp':app_temp,
             }
     #np.save('weather_forcast_dict.npy',weather_forcast_dict)
-    np.save(os.path.join('.', 'data', 'weather_forcast_dict.npy'),weather_forcast_dict)
+    np.save(os.path.join('.', 'weather_forcast_dict.npy'),weather_forcast_dict)
     print('save_forcast_data done')
     #weather_forcast_dict = np.load('weather_forcast_dict.npy', allow_pickle=True).item()
+def save_radar_data():
+    api_url = 'https://opendata.cwb.gov.tw/historyapi/v1/getMetadata/O-A0059-001?Authorization=CWB-800E53EB-AF03-4977-99E7-0C1F2AE8BFB7&format=JSON'
+    api_return_taipei = requests.get(api_url)
+    api_return_taipei_dict = api_return_taipei.json()
+    last_release_url = api_return_taipei_dict['dataset']['resources']['resource']['data']['time'][-1]['url']
+    #print(last_release_url)
+    
+    content = requests.get(last_release_url).text
+    content = content[content.find('<content>')+9 : content.find('</content>')]
+    #print(content)
+    content_list = content.split(',')
+    assert len(content_list)==921*881
+    
+    xn, yn = 921, 881
+    dbz = np.full((yn, xn), -99.0, dtype=np.float)
+    for y in range(yn):
+        for x in range(xn):
+            dbz[y, x] = float(content_list[x+y*xn])
+    np.save(os.path.join('.', 'weather_dbz.npy'), dbz)
+    
 
 """執行迴圈 *每10分鐘執行一次*"""
 def save_weather_data(gap_time=600.0):
@@ -930,6 +950,7 @@ def save_weather_data(gap_time=600.0):
             save_obs_weather_data()
             save_obs_aqi_data()
             save_forcast_data()
+            save_radar_data()
             print('抓資料執行ㄌ：', time.time()-start_time)
             start_time = now_time
         else:
@@ -1228,44 +1249,6 @@ def get_geo_data(lon, lat, hourly_rainfall):
         return True
     else:
         return False
-
-
-
-# 對車禍發生做天氣變數(下雨、風強、氣溫、陽光角度)的統計分析
-def a1_with_weather():
-    project_path = os.path.join(os.path.dirname(__file__))
-    for filename in os.listdir(project_path):
-        if '交通事故資料' in filename:
-            print('->', filename)
-            df = pd.read_csv(os.path.join(os.path.dirname(__file__), filename))
-            print(df.shape, len(df))
-            
-            #去掉最後兩行廢物:)
-            for _ in range(2):
-                df = df.drop(df.shape[0]-1, axis=0)
-            #改民國為西元
-            for i in range(len(df)):
-                df['發生時間'].iloc[i] = df['發生時間'].iloc[i].replace(df['發生時間'].iloc[i][0:3], str(int(df['發生時間'].iloc[i][0:3]) + 1911))
-            
-            #for row in df.itertuples(): #要iteration用這樣
-            #    print('-->', row[1], row[5], row[6]) #0idx 1發生時間	2發生地點	3死亡受傷人數	4車種	5經度	6緯度
-            #print(df['發生時間']) #, df['經度'], df['緯度']
-            
-            '''
-            for time_string in df['發生時間']:
-                #print(time_string)
-                result = time.strptime(time_string, "%Y年%m月%d日 %H時%M分%S秒")
-                print(result)
-            '''
-            plt.scatter(df['經度'], df['緯度'], s=2, marker='o', label=filename)
-    plt.xlabel('lon')
-    plt.ylabel('lat')
-    plt.legend()
-    
-    plt.xlim(119, 123)
-    plt.ylim(21.5, 25.5)
-    
-    plt.show()
     
 #多執行緒測試
 def mt_test_1():
@@ -1276,6 +1259,75 @@ def mt_test_2():
     print("start2")
     time.sleep(5)
     print("sleep done2")
+
+
+
+
+# 必須先跑save_weather_data至少一次、有dnn_oversampling_8.h5跟var_range_dict.npy，在/data2/3T執行
+def rain_pre_dnn(lon, lat):
+    '''
+    -> dnn_no_8 thr0.500 ets:0.372241
+    -> dnn_no_4 thr0.500 ets:0.279723
+    -> dnn_oversampling_8 thr0.918 ets:0.491323
+    -> dnn_oversampling_4 thr0.918 ets:0.436868
+    
+    -> dnn_no_8 thr0.500 F1:0.570635
+    -> dnn_no_4 thr0.500 F1:0.464559
+    -> dnn_oversampling_8 thr0.918 F1:0.803666
+    -> dnn_oversampling_4 thr0.918 F1:0.766626
+    '''
+    from tensorflow.keras.models import load_model #2.4.0
+    model = load_model(os.path.join('.', 'rain_pre_dnn', 'dnn_oversampling_8.h5')) #yes_thr=0.918
+    
+    # 抓各種資料
+    var_name_list = ['lat','lon','time','temp','rh','ws','rainfall','dbz']
+    predict_input_arr = np.zeros((1, 8))
+    
+    ## lat, lon, time_hour
+    user_time = datetime.now()
+    gogo_time = user_time + timedelta(hours=1)
+    time_hour = gogo_time.hour
+    #print(type(time_hour), time_hour)
+    predict_input_arr[0,0] = lat
+    predict_input_arr[0,1] = lon
+    predict_input_arr[0,2] = time_hour
+    
+    ## temp rh ws rainfall
+    weather_dict = get_weather_data(user_time, gogo_time.strftime('%Y-%m-%d %H:%M:%S'), lon, lat)
+    predict_input_arr[0,3] = weather_dict['temp']
+    predict_input_arr[0,4] = weather_dict['humd']
+    predict_input_arr[0,5] = weather_dict['wdsd']
+    predict_input_arr[0,6] = weather_dict['rain']
+    
+    ## dbz
+    lat_begin, lon_begin, reso = 18.0, 115.0, 0.0125
+    dbz_arr = np.load(os.path.join('.', 'weather_dbz.npy'))
+    #print(dbz_arr.shape)
+    
+    # lat_inx, lon_inx
+    lat_inx = round((lat-lat_begin)/reso)
+    lon_inx = round((lon-lon_begin)/reso)
+    #print(lat_inx, lon_inx)
+    #print(dbz_arr[lat_inx, lon_inx])
+    predict_input_arr[0,7] = dbz_arr[lat_inx, lon_inx]
+    
+    print(predict_input_arr)
+    # 尺度縮放
+    var_range_dict = np.load(os.path.join('.', 'rain_pre_dnn', 'var_range_dict.npy'), allow_pickle=True).item()
+    for i in range(predict_input_arr.shape[1]):
+        var_range = var_range_dict[var_name_list[i]]
+        predict_input_arr[i] = (predict_input_arr[i]-var_range[0]) / (var_range[1]-var_range[0])
+    print(predict_input_arr)
+    
+    yes_thr = 0.918
+    output = model.predict(predict_input_arr)
+    if output[i,1]>=yes_thr:
+        return True
+    else:
+        return False
+    
+    
+    
     
 
 if __name__ == '__main__':
@@ -1310,6 +1362,7 @@ if __name__ == '__main__':
     #plot()
     #save_weather_data()
     
+    '''
     lon, lat = 121.540672, 25.052168
     user_time = datetime.now()
     
@@ -1326,6 +1379,7 @@ if __name__ == '__main__':
         print('9h', key, value, type(value))
     weather_score_list = get_weather_score(user_time, gogo_time.strftime('%Y-%m-%d %H:%M:%S'), lon, lat)
     print(weather_score_list)
+    '''
     
     #look_all_vd()
     
@@ -1333,9 +1387,6 @@ if __name__ == '__main__':
     #lon, lat = 121.540672, 25.052168
     #hourly_rainfall = 30
     #get_geo_data(lon, lat, hourly_rainfall) -> done
-    
-    # A1事故跟天氣關係
-    #a1_with_weather()
     
     #多執行緒測試
     '''
@@ -1348,3 +1399,6 @@ if __name__ == '__main__':
     with ThreadPoolExecutor(max_workers=10) as executor:
         executor.submit(mt_test_1)
         executor.submit(mt_test_2)'''
+    
+    lon, lat = 121.540672, 25.052168
+    if_rain = rain_pre_dnn(lon, lat)
