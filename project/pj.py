@@ -1264,7 +1264,7 @@ def mt_test_2():
 
 
 # 必須先跑save_weather_data至少一次、有dnn_oversampling_8.h5跟var_range_dict.npy，在/data2/3T執行
-def rain_pre_dnn(lon, lat):
+def rain_pre_dnn(user_time, lon, lat):
     '''
     -> dnn_no_8 thr0.500 ets:0.372241
     -> dnn_no_4 thr0.500 ets:0.279723
@@ -1284,7 +1284,6 @@ def rain_pre_dnn(lon, lat):
     predict_input_arr = np.zeros((1, 8))
     
     ## lat, lon, time_hour
-    user_time = datetime.now()
     gogo_time = user_time + timedelta(hours=1)
     time_hour = gogo_time.hour
     #print(type(time_hour), time_hour)
