@@ -1,0 +1,9 @@
+lat min=20.003897, max=25.627975
+lon min=118.289281, max=122.079744
+time min=0.000000, max=23.000000
+temp min=4.000000, max=38.500000
+rh min=13.000000, max=100.000000
+ws min=0.000000, max=36.500000
+rainfall min=0.000000, max=108.000000
+dbz min=0.000000, max=55.000000
+---record_var_range over---

@@ -1,0 +1,12 @@
+{
+  "type": "service_account",
+  "project_id": "star-of-commuter",
+  "private_key_id": "00086cd89516b524493b61649bfcb509f7a38eb0",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCHaHCitP4aXkJR\nIrh7dDNXNjD71jG6i4GETL99G70wokQWJZs2rqikx4OqQldP+KiFJB/2/bIHN9qB\nEdyGR0bfnHSJoYPmOK68eEiCGNg8uAfWRpbfwgCxtiJg6oHdZBAl8w18aXtDgtUo\nucWbrJEYWR5aIJuEwOffNzhuFU4gbnX+r/TKWrZzRUcIn7XGK8Jnaqtt8ahDWMbj\nt6OQRIpmfsZP8FSa2H9+dGxEBQNhuFms4Vujbo2VPf1Sfwfm3J9W0fyewkyCA3hI\n8WokUi5Gkngxjq4RRM3zm4s050XIGBhuv/Dp++Hny9Wy2Ox4fNQWlCDVleNE0oTD\nn9xWJb4vAgMBAAECggEAAzrkj50NqrIGQZ/jErQqPVxXkspV6Vib6vysXLRQBlxN\n5NFaKysYxBrWSItzQGnIFf+km48LCM0LnfnqbsbofpEMM/RHDIjcR4v+/st6Ql3e\nzKe7wElacY13Xc8k8JO10ZHuB8JkZFnh8n9r9/4H1V2FhyoxS4YRLJaeoVGfdCU6\n3Ppkp5tn7mnr9EH03fE8zhkzDE8Yl+7ysvIYeU3+aFtMALPym5XbQgFzArg4YWxc\n6u5Z4R86MZvqZUGeWv4KP0db/d5lxV7cJ/vS++92pI/4TMSbYB3bCQm4vmLAqA+S\ntNVW4b1j2/e0y+de4lH9Y5bRmviK/MVnYxhERlfL8QKBgQC9r7gmEu3PBAD+AvdR\nzfDTqU0AuUVIMCsdFxIElcSoxCICLhcZTMEJ554l+EGsWyIzmnIOyll3T8n7f7WO\nHaTFaEXWBwJiEBGSWAEcZTXkvy070JntHv3aYQCY/+8PzNGXDho4R95Q/6nW8t2Y\nItwlU6n+itUdI4VjlsHpf38AtQKBgQC2vvzHusy4aZ0ygQhiPVEUn6g7bzf2jwzr\nGXsH/NMdZrITt07rQHqOLLf6SXy/AzCQ9FCZrf95ekXT/8MZLlpBNSJ8aplwNuQA\njJ25GTXY3OIXr7yCKkwcsSha4cGsn6U/Q5neVobCyvJhuGv4rwCwd8XNuI1cySNm\nvjoUsKYl0wKBgQCSCuqDFevWiUSiTXJRn3ed3ymUNxDqhXuMSCjtMspZDbkJaKcM\nKZYupA+VOFCH/RqWFIFgddbwD5R5eFg2dQhZnPC32mmxSqHcxLkGPb6CwdZ3ySHZ\n+RSFwE2Pfu12gsGTxZ3WWy8FufHvtsl5ys0oSAQIIKf4aVLX3EisGCeWSQKBgGvB\nqmRLbbO/8wV4uGzVIx46FoUVS7aDG2b1m2pWVlYb3B1sFYj6eEmlbMaU1o37X4PZ\nzD0SMHZ89vfO9EfA4U9Z+X/Li7ZzZ3Y7dDVU/D9n35l/8nP+ZOr2O4l7XSxg5pur\nTOuhsczixpGAoYn+BzYHKgfoLtLrd4h52t2gXBgpAoGAbMJlKY/XibEZ0zVpFobu\nws5XDLNtj7mwQyPVc6s0Sdw5r4Enh51mU9Oht58kThXSt+AOwsjgOI7smZKEa9Bf\noKa/EJRoaLjITylqPVgMzHKcNc5Er8cKrYWj3EjaPmNI/QlRTMssCqEK1ePuAxM6\nLkkSCgyzyRU2mRV10PeMh3o=\n-----END PRIVATE KEY-----\n",
+  "client_email": "star-of-commuter@appspot.gserviceaccount.com",
+  "client_id": "113576345440290858171",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/star-of-commuter%40appspot.gserviceaccount.com"
+}

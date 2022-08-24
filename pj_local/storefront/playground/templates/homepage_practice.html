@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <style>
+        .container{
+            display: flex;
+            justify-content: right; 
+            align-items: center;
+            padding-top: 0%;
+        }
+        .bg-default{
+            background-color:rgba(176, 196, 226, 1);
+            color: aqua;
+            border-color:blue;
+        }
+        .btn-default{
+            background-color:rgba(255, 193, 37, 1);
+            color: white;
+            border-color:rgba(255, 193, 37, 1);
+        }
+        .bdcard{
+            width: 300px;
+            float:left; /* 圖片在左邊 */
+            padding: 20px;
+          }
+        .bdtext{
+            float: right;  /* 文字在右邊 */
+            width: 430px;
+            padding: 20px 20px 0px 0px;
+          }
+    </style>
+</head>
+
+<!--橫幅-->
+<body onload="wol();">
+
+    <div class="jumbotron jumbotron-fluid bg-default text-light" > 
+        <!--<div class="alpha">-->
+        <h1 class="display-4" style="text-align:center;">通勤族的救星</h1>
+    </div>
+
+    <div class="bdcard">
+    <img src="IMG_0001.jpg" alt="map_view" width"500" height="400">
+    </div>
+        
+<!--輸入起終點及時間的form-->    
+
+    <div class="container">
+        <div class="box">
+            <h1>現在時間</h1>
+        <p id="demo" ></p>
+        <script>
+         const d = new Date();
+         document.getElementById("demo").innerHTML = d;
+        </script>
+            <form action="" method="get">
+              <label for="startpoint">起點:</label>
+              <br>
+              <input type="text" size=40 id="startpoint" name="startpoint" placeholder="Enter a place" required="required">
+              <br><br>
+              <label for="endpoint">終點:</label>
+              <br>
+              <input type="text" size=40 id="endpoint" name="endpoint" placeholder="Enter a place" required="required">
+              <br><br>
+              <label for="date">出發日期:</label>
+              <br>
+              <input type="date" name="dateShow" id="mydate" min="dateString" max="lastdate"/>
+             
+              <!--把起始時間設為今天日期-->
+              <script type="text/javascript">
+              function wol(){
+              var mydateInput = document.getElementById("mydate");
+              var date = new Date();
+              var dateString = date.getFullYear()+"/"+(date.getMonth()+1)+"/"+date.getDate();
+              mydateInput.value=dateString;
+              var lastdate = date.getFullYear()+"/"+(date.getMonth()+1)+"/"+(date.getDate()+3);
+              }
+            </script>
+              <!--<input type='date'size=40 value='2022-07-22' min='2022-07-22' max='2022-07-30' step='1'>-->                
+              <br><br>
+              <label for="time">出發時間:</label>
+              <br>
+              <input type='time' name="time" id="time" size=40 min='00:00' max='23:59' step='1'>
+              <br><br>
+             <!--<button type="submit" value="submit" class="ban ben-primary">submit</botton>-->
+              <button type="submit" value="submit" class="btn btn-default">submit</button>
+            </form> 
+        </div>
+    </div>
+
+    
+  
+<!--    
+ <div class="jumbotron">
+  <h1 class="display-4">Hello, world!</h1>
+  <p class="lead">This is a simple hero unit, a simple jumbotron-style component for calling extra attention to featured content or information.</p>
+  <hr class="my-4">
+  <p>It uses utility classes for typography and spacing to space content out within the larger container.</p>
+  <p class="lead">
+    <a class="btn btn-primary btn-lg" href="#" role="button">Learn more</a>
+  </p>
+</div>
+-->
+
+
+</body>
+</html>

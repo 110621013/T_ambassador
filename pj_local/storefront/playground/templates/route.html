@@ -1,0 +1,160 @@
+<style>
+    html, body{
+        width: 100%;
+        height: 100%;
+    }
+    #map{
+        width: 100%;
+        height: 100%;
+        position: absolute;
+    }
+
+    .image{
+        bottom: 15px;
+        right: 50px;
+        position: absolute;
+        z-index:10;
+        background: #8EB9A8;
+    }
+
+    .leftpic{
+        height:155px;
+    }
+
+    .btn{
+        bottom: 50px;
+        right: 50%;
+        position: absolute;
+        z-index:10;
+    }
+
+
+</style>
+
+<div id="map"></div>
+
+<div class="image">
+    {% load static %}
+    
+    <img class="leftpic" id="AI_cardname" src="" alt="AI_RainorNot">                
+</div>
+
+<div class="btn">
+    <input type ="button" onclick="history.back()" value="選擇另一條路線"></input>
+</div>
+<script>
+    AI_cardname={{AI_cardName}};
+    console.log(AI_cardname);
+    var pictureUrl ="/static/"+AI_cardname;
+    document.getElementById("AI_cardname").src = pictureUrl;
+</script>
+<script>
+    dic={"1":"https://www.cwb.gov.tw/V8/assets/img/weather_icons/weathers/svg_icon/day/01.svg",
+    "2":"https://www.cwb.gov.tw/V8/assets/img/weather_icons/weathers/svg_icon/day/02.svg",
+    "3":"https://www.cwb.gov.tw/V8/assets/img/weather_icons/weathers/svg_icon/day/03.svg",
+    "4":"https://www.cwb.gov.tw/V8/assets/img/weather_icons/weathers/svg_icon/day/05.svg",
+    "5":"https://www.cwb.gov.tw/V8/assets/img/weather_icons/weathers/svg_icon/day/04.svg",
+    "6":"https://www.cwb.gov.tw/V8/assets/img/weather_icons/weathers/svg_icon/day/06.svg",
+    "7":"https://www.cwb.gov.tw/V8/assets/img/weather_icons/weathers/svg_icon/day/07.svg",
+    "8":"https://www.cwb.gov.tw/V8/assets/img/weather_icons/weathers/svg_icon/day/11.svg",
+    "9":"https://www.cwb.gov.tw/V8/assets/img/weather_icons/weathers/svg_icon/day/11.svg",
+    "10":"https://www.cwb.gov.tw/V8/assets/img/weather_icons/weathers/svg_icon/day/14.svg",
+    "11":"https://www.cwb.gov.tw/V8/assets/img/weather_icons/weathers/svg_icon/day/14.svg"};
+
+    // 從view讀取字典資料
+    start_end={{start_end}};
+    station_lat={{station_lat}};
+    station_lng={{station_lng}};
+    alert_lat={{alert_lat}};
+    alert_lng={{alert_lng}};
+    //arrive_station_time={{arrive_station_time}};
+    weather_icon={{weather_icon}};
+    waypoint_lat={{waypoint_lat}};
+    waypoint_lng={{waypoint_lng}};
+    alert_path={{alert_path}};
+    AI_cardname={{AI_cardName}};
+    console.log(alert_path[0]);
+    var map;
+    //const image="https://upload.wikimedia.org/wikipedia/en/thumb/7/73/Pikachu_artwork_for_Pok%C3%A9mon_Red_and_Blue.webp/220px-Pikachu_artwork_for_Pok%C3%A9mon_Red_and_Blue.webp.png";
+    const waypts = []; // 中繼站
+    let weatherOverlay; // 天氣圖層
+    var overlayOpts = {opacity:0.7} // 天氣圖層透明度
+    for (i=0;i<waypoint_lat.length;i++)
+        {
+            waypts.push({
+                location: ({lng: waypoint_lng[i],lat: waypoint_lat[i]}),
+                stopover: false,
+              });
+        }
+    function initMap() {
+        // 載入路線服務與路線顯示圖層
+        var directionsService = new google.maps.DirectionsService();
+        var directionsDisplay = new google.maps.DirectionsRenderer();
+ 
+        // 初始化地圖
+        map = new google.maps.Map(document.getElementById('map'), {
+            zoom: 16,
+            center: { lat: start_end[0], lng: start_end[1] }
+        });
+        // 天氣圖層
+        for (i=0;i<station_lat.length;i++)
+            {
+                let imageBounds = 
+                {
+                    north: station_lat[i]+0.02,
+                    south: station_lat[i],
+                    east: station_lng[i]+0.02,
+                    west: station_lng[i],
+                };
+            weatherOverlay = new google.maps.GroundOverlay(dic[weather_icon[i]],imageBounds,overlayOpts);
+            weatherOverlay.setMap(map);  
+            }
+        // 放置路線圖層
+        directionsDisplay.setMap(map);
+    
+        // 路線相關設定
+        var request = 
+            {
+                origin: { lat:start_end[0], lng:start_end[1] },
+                destination: { lat:start_end[2], lng:start_end[3] },
+                travelMode: 'DRIVING',
+                avoidFerries: true,
+                avoidHighways: true,
+                avoidTolls: true,
+                waypoints: waypts,
+            };
+        var markers = [];
+        var infowindows = [];
+        // 繪製路線
+        directionsService.route(request, function (result, status) {
+            if (status == 'OK') {
+                alert_lat.forEach((e, i) => 
+                    {   
+                        markers[i] = new google.maps.Marker({
+                        position: { lat: alert_lat[i], lng:alert_lng[i] },
+                        map: map,
+                        icon:"../../../static/alert1.png"
+                        });
+                        {% load static %}
+
+                        infowindows[i] = new google.maps.InfoWindow({
+                            content:"<body>"+"<img src='/static/"+alert_path[i]+".png"+"' ></body>"
+
+                            });
+  
+                        markers[i].addListener('click', function () {
+                            if(infowindows[i].anchor){
+                                infowindows[i].close();
+                            }else{
+                                infowindows[i].open(map, markers[i]);
+                                }
+                                });
+                    });
+                directionsDisplay.setDirections(result);
+            } else {
+                console.log(status);
+            }
+        });
+}
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB5WPfBV6n-qOjuJiYmKG8qCG3JbcONopY&callback=initMap&language=zh-TW" async defer></script>

@@ -448,7 +448,7 @@ def get_traffic_api_data_highway(access_token, VDimfo_list_highway, traffic_dict
                     mslt_v[k] /= mslt[k]
                 
             if gogo_flag:
-                print('ok', VDLives["VDID"], mslt, mslt_v)
+                #print('ok', VDLives["VDID"], mslt, mslt_v)
                 traffic_dict[VDLives["VDID"]] = {}
                 traffic_dict[VDLives["VDID"]]['lon'] = VDimfo_list_highway[i]['lon']
                 traffic_dict[VDLives["VDID"]]['lat'] = VDimfo_list_highway[i]['lat']
@@ -459,10 +459,10 @@ def get_traffic_api_data_highway(access_token, VDimfo_list_highway, traffic_dict
                 traffic_dict[VDLives["VDID"]]['Volume'] = mslt
                 traffic_dict[VDLives["VDID"]]['Speed'] = mslt_v
                 traffic_dict[VDLives["VDID"]]["DataCollectTime"] = VDLives["DataCollectTime"]
-            else:
-                print('not ok', VDLives["VDID"], mslt, mslt_v)
-        else:
-            print('==> no', VDimfo_list_highway[i]['id'])
+            #else:
+            #    print('not ok', VDLives["VDID"], mslt, mslt_v)
+        #else:
+        #    print('==> no', VDimfo_list_highway[i]['id'])
     return traffic_dict
 
 
@@ -603,6 +603,7 @@ def plot_consider_vd():
 
 #回傳：最近一個VD的車流資訊(ID、路線方向、幾線道、路名、各車種(MSLT)數量)
 def get_traffic_data(lon, lat):
+    download_data(['traffic_dict.npy'])
     traffic_dict = np.load(os.path.join('.', 'traffic_dict.npy'), allow_pickle=True).item()
     #traffic_dict = np.load(os.path.join('.', 'data', 'traffic_dict.npy'), allow_pickle=True).item()
     max_limit_range = 0.01
@@ -975,6 +976,12 @@ def change_obs_weather(weather):
                 return(weather)
 
 def get_weather_data(user_time, gogo_time, lon, lat):
+    download_data(['weather_dbz.npy',
+                'weather_forcast_dict.npy',
+                'weather_obs_aqi_dict.npy',
+                'weather_obs_rain_dict.npy',
+                'weather_obs_temp_dict.npy',
+                'weather_obs_weather_dict.npy',])
     #到達站點時間 +0UTC
     gogo_time_UTC = datetime.strptime(gogo_time,'%Y-%m-%d %H:%M:%S') - timedelta(hours=8)
     gogo_time_new = str(gogo_time_UTC)[0:10]+ 'T' +str(gogo_time_UTC)[11:13]+ ':00:00+00:00'
@@ -1308,24 +1315,43 @@ def rain_pre_dnn(user_time, lon, lat):
     lon_inx = round((lon-lon_begin)/reso)
     #print(lat_inx, lon_inx)
     #print(dbz_arr[lat_inx, lon_inx])
-    predict_input_arr[0,7] = dbz_arr[lat_inx, lon_inx]
+    if dbz_arr[lat_inx, lon_inx] < 0.0:
+        predict_input_arr[0,7] = 0.0
+    else:
+        predict_input_arr[0,7] = dbz_arr[lat_inx, lon_inx]
     
-    print(predict_input_arr)
+    #print(predict_input_arr, predict_input_arr.shape)
     # 尺度縮放
     var_range_dict = np.load(os.path.join('.', 'rain_pre_dnn', 'var_range_dict.npy'), allow_pickle=True).item()
     for i in range(predict_input_arr.shape[1]):
         var_range = var_range_dict[var_name_list[i]]
-        predict_input_arr[i] = (predict_input_arr[i]-var_range[0]) / (var_range[1]-var_range[0])
-    print(predict_input_arr)
+        predict_input_arr[0, i] = (predict_input_arr[0, i]-var_range[0]) / (var_range[1]-var_range[0])
+    #print(predict_input_arr)
     
     yes_thr = 0.918
     output = model.predict(predict_input_arr)
-    if output[i,1]>=yes_thr:
+    #print(output.shape, output)
+    if output[0,1]>=yes_thr:
         return True
     else:
         return False
     
+def download_data(download_data_name_list=[]):
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]=os.path.join(os.getcwd(), 'star-of-commuter-00086cd89516.json')
+    from google.cloud import storage 
+    bucket_name = 'star-of-commuter.appspot.com' #資料夾/專案名
     
+    try:
+        my_storage_client = storage.Client()
+        my_bucket = my_storage_client.get_bucket(bucket_name)
+        for data_name in download_data_name_list:
+            blob_name = 'data/{}'.format(data_name)
+            blob = my_bucket.blob(blob_name)
+            blob.download_to_filename(filename=data_name)
+        return True
+    except Exception as e :
+        print(e)
+        return False
     
     
 
@@ -1361,7 +1387,7 @@ if __name__ == '__main__':
     #plot()
     #save_weather_data()
     
-    '''
+    
     lon, lat = 121.540672, 25.052168
     user_time = datetime.now()
     
@@ -1371,7 +1397,7 @@ if __name__ == '__main__':
         print('1h', key, value, type(value))
     weather_score_list = get_weather_score(user_time, gogo_time.strftime('%Y-%m-%d %H:%M:%S'), lon, lat)
     print(weather_score_list)
-    
+    '''
     gogo_time = user_time + timedelta(hours=9)
     weather_dict = get_weather_data(user_time, gogo_time.strftime('%Y-%m-%d %H:%M:%S'), lon, lat)
     for key, value in weather_dict.items():
@@ -1399,5 +1425,7 @@ if __name__ == '__main__':
         executor.submit(mt_test_1)
         executor.submit(mt_test_2)'''
     
-    lon, lat = 121.540672, 25.052168
-    if_rain = rain_pre_dnn(lon, lat)
+    #user_time = datetime.now()
+    #lon, lat = 121.540672, 25.052168
+    #if_rain = rain_pre_dnn(user_time, lon, lat)
+    #print(if_rain)
