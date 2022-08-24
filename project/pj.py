@@ -1429,3 +1429,6 @@ if __name__ == '__main__':
     #lon, lat = 121.540672, 25.052168
     #if_rain = rain_pre_dnn(user_time, lon, lat)
     #print(if_rain)
+    
+    #24056 w
+    #24058 t

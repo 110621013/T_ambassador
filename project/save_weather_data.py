@@ -22,7 +22,7 @@ def change_obs_weather(weather):
                 return(weather)
 
 """抓取obs與for資料存為.npy檔(obs_temp_data.npy/obs_rain_data.npy/obs_weatherVIS_data.npy/ obs_aqi_data.npy/obs_forcast_data.npy)"""
-def save_obs_temp_data(now_time_stamp): #局屬跟無人
+def save_obs_temp_data(): #局屬跟無人
     url_cwb = 'https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=CWB-800E53EB-AF03-4977-99E7-0C1F2AE8BFB7&format=JSON&stationId=466850,466880,466900,466910,466920,466930,466940,467050&elementName=WDSD,TEMP,HUMD,VIS,Weather&parameterName='
     url_auto = 'https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0001-001?Authorization=CWB-800E53EB-AF03-4977-99E7-0C1F2AE8BFB7&format=JSON&stationId=C0A520,C0A530,C0A540,C0A550,C0A560,C0A570,C0A640,C0A650,C0A660,C0A770,C0A860,C0A870,C0A880,C0A890,C0A920,C0A931,C0A940,C0A950,C0A970,C0A980,C0A9C0,C0A9F0,C0AC40,C0AC60,C0AC70,C0AC80,C0ACA0,C0AD00,C0AD10,C0AD30,C0AD40,C0AD50,C0AG80,C0AH00,C0AH10,C0AH30,C0AH40,C0AH50,C0AH70,C0AH80,C0AH90,C0AI00,C0AI10,C0AI20,C0AI30,C0AI40,C0AJ10,C0AJ20,C0AJ30,C0AJ40,C0AJ50,C0B010,C0B040,C0B050,C0C460,C0C480,C0C490,C0C590,C0C620,C0C630,C0C650,C0C660,C0C670,C0C680,C0C700,C0C710,C0C720,C0C730,C0C740,C1A630,C1A750,C1A760,C1A9N0,C1AC50,C1AI50,C1AI60,C1C510&elementName=WDSD,TEMP,HUMD&parameterName='
     url_list = [url_cwb,url_auto]
@@ -48,10 +48,10 @@ def save_obs_temp_data(now_time_stamp): #局屬跟無人
                     'app_temp':app_temp,
                 }
     #np.save('weather_obs_temp_dict.npy',weather_obs_temp_dict)
-    np.save(os.path.join('.', 'weather_obs_temp_dict_{}.npy'.format(now_time_stamp)),weather_obs_temp_dict)
+    np.save(os.path.join('.', 'weather_obs_temp_dict.npy'),weather_obs_temp_dict)
     print('save_obs_temp_data done')
     #weather_obs_temp_dict = np.load('weather_obs_temp_dict.npy', allow_pickle=True).item()
-def save_obs_rain_data(now_time_stamp): #雨量
+def save_obs_rain_data(): #雨量
     url_rain = 'https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0002-001?Authorization=CWB-800E53EB-AF03-4977-99E7-0C1F2AE8BFB7&format=JSON&stationId=C0A520,C0A530,C0A540,C0A550,C0A560,C0A570,C0A640,C0A650,C0A660,C0A770,C0A860,C0A870,C0A880,C0A890,C0A920,C0A931,C0A940,C0A950,C0A970,C0A980,C0A9C0,C0A9F0,C0AC40,C0AC60,C0AC70,C0AC80,C0ACA0,C0AD00,C0AD10,C0AD30,C0AD40,C0AD50,C0AG80,C0AH00,C0AH10,C0AH30,C0AH40,C0AH50,C0AH70,C0AH80,C0AH90,C0AI00,C0AI10,C0AI20,C0AI30,C0AI40,C0AJ10,C0AJ20,C0AJ30,C0AJ40,C0AJ50,C0B010,C0B040,C0B050,C0C460,C0C480,C0C490,C0C590,C0C620,C0C630,C0C650,C0C660,C0C670,C0C680,C0C700,C0C710,C0C720,C0C730,C0C740,C1A630,C1A750,C1A760,C1A9N0,C1AC50,C1AI50,C1AI60,C1C510&elementName=RAIN&parameterName='
     location = requests.get(url_rain).json()['records']['location']
     weather_obs_rain_dict = {}
@@ -70,10 +70,10 @@ def save_obs_rain_data(now_time_stamp): #雨量
                 'rain':rain,
             }
     #np.save('weather_obs_rain_dict.npy',weather_obs_rain_dict)
-    np.save(os.path.join('.', 'weather_obs_rain_dict_{}.npy'.format(now_time_stamp)),weather_obs_rain_dict)
+    np.save(os.path.join('.', 'weather_obs_rain_dict.npy'),weather_obs_rain_dict)
     print('save_obs_rain_data done')
     #weather_obs_rain_dict = np.load('weather_obs_rain_dict.npy', allow_pickle=True).item()
-def save_obs_weather_data(now_time_stamp): #局屬
+def save_obs_weather_data(): #局屬
     url_weather = 'https://opendata.cwb.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=CWB-800E53EB-AF03-4977-99E7-0C1F2AE8BFB7&format=JSON&stationId=466850,466880,466900,466910,466920,466930,466940,467050&elementName=WDSD,TEMP,HUMD,VIS,Weather&parameterName='
     location = requests.get(url_weather).json()['records']['location']
     weather_obs_weather_dict = {}
@@ -94,11 +94,11 @@ def save_obs_weather_data(now_time_stamp): #局屬
                 }
       
     #np.save('weather_obs_weather_dict.npy',weather_obs_weather_dict)
-    np.save(os.path.join('.', 'weather_obs_weather_dict_{}.npy'.format(now_time_stamp)),weather_obs_weather_dict)
+    np.save(os.path.join('.', 'weather_obs_weather_dict.npy'),weather_obs_weather_dict)
     
     print('save_obs_weather_data done')
     #weather_obs_weather_dict = np.load('weather_obs_weather_dict.npy', allow_pickle=True).item()
-def save_obs_aqi_data(now_time_stamp):
+def save_obs_aqi_data():
     url_aqi = 'https://data.epa.gov.tw/api/v2/aqx_p_432?api_key=668a6684-c173-483e-a05c-03b993655ce4'
     records = requests.get(url_aqi).json()['records']
     weather_obs_aqi_dict = {}
@@ -117,11 +117,11 @@ def save_obs_aqi_data(now_time_stamp):
                 'aqi':aqi,
             }
     #np.save('weather_obs_aqi_dict.npy',weather_obs_aqi_dict)
-    np.save(os.path.join('.', 'weather_obs_aqi_dict_{}.npy'.format(now_time_stamp)),weather_obs_aqi_dict)
+    np.save(os.path.join('.', 'weather_obs_aqi_dict.npy'),weather_obs_aqi_dict)
     print('save_obs_aqi_data done')
     #weather_obs_aqi_dict = np.load('weather_obs_aqi_dict.npy', allow_pickle=True).item()
 """抓取forcast存為.npy檔"""
-def save_forcast_data(now_time_stamp):
+def save_forcast_data():
     forcast_lon_lat_list = [
         [121.781205,25.071182],[121.442017,24.997647],[121.448906,25.164889],[121.529731,25.182586],[121.514853,25.037658],[121.544547,25.162078],[121.740475,25.133314],[121.613275,23.975128],[121.047486,25.006744],
         [121.402008,24.974944],[121.709750,24.938183],[121.745736,24.892600],[121.823711,24.971197],[121.502811,24.776203],[121.597992,24.848222],[121.662917,24.993969],[121.742892,25.002719],[121.801147,25.113169],
@@ -160,10 +160,10 @@ def save_forcast_data(now_time_stamp):
                 'app_temp':app_temp,
             }
     #np.save('weather_forcast_dict.npy',weather_forcast_dict)
-    np.save(os.path.join('.', 'weather_forcast_dict_{}.npy'.format(now_time_stamp)),weather_forcast_dict)
+    np.save(os.path.join('.', 'weather_forcast_dict.npy'),weather_forcast_dict)
     print('save_forcast_data done')
     #weather_forcast_dict = np.load('weather_forcast_dict.npy', allow_pickle=True).item()
-def save_radar_data(now_time_stamp):
+def save_radar_data():
     api_url = 'https://opendata.cwb.gov.tw/historyapi/v1/getMetadata/O-A0059-001?Authorization=CWB-800E53EB-AF03-4977-99E7-0C1F2AE8BFB7&format=JSON'
     api_return_taipei = requests.get(api_url)
     api_return_taipei_dict = api_return_taipei.json()
@@ -181,7 +181,7 @@ def save_radar_data(now_time_stamp):
     for y in range(yn):
         for x in range(xn):
             dbz[y, x] = float(content_list[x+y*xn])
-    np.save(os.path.join('.', 'weather_dbz_{}.npy'.format(now_time_stamp)), dbz)
+    np.save(os.path.join('.', 'weather_dbz.npy'), dbz)
 
 def upload_data(upload_data_name_list=[]):
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="/data2/3T/star-of-commuter-00086cd89516.json"
@@ -209,21 +209,20 @@ def save_weather_data(gap_time=600.0):
     while True:
         now_time = time.time() # float
         now_time_str = time.strftime('%Y/%m/%d_%H:%M', time.localtime(now_time))
-        now_time_stamp = time.strftime('%H_%M', time.localtime(now_time))
         if now_time - start_time > gap_time :
-            save_obs_temp_data(now_time_stamp)
-            save_obs_rain_data(now_time_stamp)
-            save_obs_weather_data(now_time_stamp)
-            save_obs_aqi_data(now_time_stamp)
-            save_forcast_data(now_time_stamp)
-            save_radar_data(now_time_stamp)
+            save_obs_temp_data()
+            save_obs_rain_data()
+            save_obs_weather_data()
+            save_obs_aqi_data()
+            save_forcast_data()
+            save_radar_data()
             upload_data([
-                'weather_dbz_{}.npy'.format(now_time_stamp),
-                'weather_forcast_dict_{}.npy'.format(now_time_stamp),
-                'weather_obs_aqi_dict_{}.npy'.format(now_time_stamp),
-                'weather_obs_rain_dict_{}.npy'.format(now_time_stamp),
-                'weather_obs_temp_dict_{}.npy'.format(now_time_stamp),
-                'weather_obs_weather_dict_{}.npy'.format(now_time_stamp)
+                'weather_dbz.npy',
+                'weather_forcast_dict.npy',
+                'weather_obs_aqi_dict.npy',
+                'weather_obs_rain_dict.npy',
+                'weather_obs_temp_dict.npy',
+                'weather_obs_weather_dict.npy'
             ])
             print('抓資料上傳資料執行ㄌ：', time.time()-start_time)
             start_time = now_time
