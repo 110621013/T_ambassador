@@ -126,25 +126,6 @@ def get_traffic_api_data_highway(access_token, VDimfo_list_highway, traffic_dict
         #    print('==> no', VDimfo_list_highway[i]['id'])
     return traffic_dict
 
-def upload_data(upload_data_name_list=[]):
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="/data2/3T/star-of-commuter-00086cd89516.json"
-    from google.cloud import storage 
-    bucket_name = 'star-of-commuter.appspot.com' #資料夾/專案名
-    
-    try:
-        my_storage_client = storage.Client()
-        my_bucket = my_storage_client.get_bucket(bucket_name)
-        for data_name in upload_data_name_list:
-            blob_name = 'data/{}'.format(data_name)
-            blob = my_bucket.blob(blob_name)
-            #with open(data_name, "rb") as my_file:
-            #    blob.upload_from_file(my_file)
-            blob.upload_from_filename(data_name)
-            print('--->', data_name, 'upload')
-    except Exception as e :
-        print(e)
-        return False
-
 #回傳：無，每五分鐘儲存一套各VD的經緯度跟車流資料
 def save_traffic_data(get_gap=600):
     county_list = ['Taipei','Taoyuan','Keelung'] #,'NewTaipei'
@@ -209,8 +190,7 @@ def save_traffic_data(get_gap=600):
     last_time = 0.0
     while True:
         now_time = time.time() # float
-        now_time_str = time.strftime('%Y_%m_%d-%H:%M', time.localtime(now_time))
-        now_time_stamp = time.strftime('%H_%M', time.localtime(now_time))
+        #now_time_str = time.strftime('%Y_%m_%d-%H:%M', time.localtime(now_time))
         #print(now_time_str)
         if now_time - last_time > get_gap: # 執行抓資料
             traffic_dict = {}
@@ -226,7 +206,7 @@ def save_traffic_data(get_gap=600):
             last_time = now_time
             print('抓資料上傳資料執行ㄌ：', time.time()-start_time)
             #print('traffic_dict', traffic_dict)
-            np.save(os.path.join('.', 'traffic_dict_{}.npy'.format(now_time_stamp)), traffic_dict)
+            np.save(os.path.join('.', 'traffic_dict.npy'), traffic_dict)
             #np.save(os.path.join('.', 'data', 'traffic_dict.npy'), traffic_dict)
             
             traffic_dict = np.load(os.path.join('.', 'traffic_dict.npy'), allow_pickle=True).item()
@@ -256,11 +236,30 @@ def save_traffic_data(get_gap=600):
                     traffic_score[vdid]['if_large_car_score'] = 1
                 else:
                     traffic_score[vdid]['if_large_car_score'] = 5
-            np.save(os.path.join('.', 'traffic_score_{}.npy'.format(now_time_stamp)), traffic_score)
+            np.save(os.path.join('.', 'traffic_score.npy'), traffic_score)
             print('np.save traffic_score')
         else:
             time.sleep(10)
             #print('--sleep--')
+
+def upload_data(upload_data_name_list=[]):
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="/data2/3T/star-of-commuter-00086cd89516.json"
+    from google.cloud import storage 
+    bucket_name = 'star-of-commuter.appspot.com' #資料夾/專案名
+    
+    try:
+        my_storage_client = storage.Client()
+        my_bucket = my_storage_client.get_bucket(bucket_name)
+        for data_name in upload_data_name_list:
+            blob_name = 'data/{}'.format(data_name)
+            blob = my_bucket.blob(blob_name)
+            #with open(data_name, "rb") as my_file:
+            #    blob.upload_from_file(my_file)
+            blob.upload_from_filename(os.path.join(os.path.abspath("."),data_name))
+            print('--->', data_name, 'upload')
+    except Exception as e :
+        print(e)
+        return False
 
 if __name__ == '__main__':
     lat_limit = 24.5

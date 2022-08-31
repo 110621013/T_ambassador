@@ -71,7 +71,6 @@ def cal_ETS_F1(model_name, model, x_test, y_test, yes_thr=0.5):
     with open(os.path.join('.', 'F1.txt'), 'a') as f:
         f.write('-> {} thr{:.3f} F1:{:.6f}\n'.format(model_name, yes_thr, F1))
             
-## !!還沒做完!!
 def SHAP():
     #平均將預測的絕對概率改變了???個百分點
     import shap
@@ -462,7 +461,7 @@ def get_data_x_y(train_or_test, datadeal_type, if_to_categorical=True):
 def main_dnn():
     print('__main__ gogo')
     save_path = os.path.join('.')
-    
+
     for datadeal_type in ['no', 'oversampling']:
         x_train, y_train = get_data_x_y(train_or_test='train', datadeal_type=datadeal_type)
         x_test, y_test = get_data_x_y(train_or_test='test', datadeal_type=datadeal_type)
@@ -503,7 +502,6 @@ def main_dnn():
 
 
 if __name__ == '__main__':
-    #print_var_arr_2()
     #make_var_arr()
     #record_var_range()
     #make_dataset_npy()

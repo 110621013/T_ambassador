@@ -183,25 +183,6 @@ def save_radar_data():
             dbz[y, x] = float(content_list[x+y*xn])
     np.save(os.path.join('.', 'weather_dbz.npy'), dbz)
 
-def upload_data(upload_data_name_list=[]):
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="/data2/3T/star-of-commuter-00086cd89516.json"
-    from google.cloud import storage 
-    bucket_name = 'star-of-commuter.appspot.com' #資料夾/專案名
-    
-    try:
-        my_storage_client = storage.Client()
-        my_bucket = my_storage_client.get_bucket(bucket_name)
-        for data_name in upload_data_name_list:
-            blob_name = 'data/{}'.format(data_name)
-            blob = my_bucket.blob(blob_name)
-            #with open(data_name, "rb") as my_file:
-            #    blob.upload_from_file(my_file)
-            blob.upload_from_filename(data_name)
-            print('--->', data_name, 'upload')
-    except Exception as e :
-        print(e)
-        return False
-
 """執行迴圈 *每10分鐘執行一次*"""
 def save_weather_data(gap_time=600.0):
     start_time = 0.0
@@ -229,7 +210,25 @@ def save_weather_data(gap_time=600.0):
         else:
             time.sleep(10)
             #print(now_time_str)
-            
+
+def upload_data(upload_data_name_list=[]):
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"]="/data2/3T/star-of-commuter-00086cd89516.json"
+    from google.cloud import storage 
+    bucket_name = 'star-of-commuter.appspot.com' #資料夾/專案名
+    
+    try:
+        my_storage_client = storage.Client()
+        my_bucket = my_storage_client.get_bucket(bucket_name)
+        for data_name in upload_data_name_list:
+            blob_name = 'data/{}'.format(data_name)
+            blob = my_bucket.blob(blob_name)
+            #with open(data_name, "rb") as my_file:
+            #    blob.upload_from_file(my_file)
+            blob.upload_from_filename(os.path.join(os.path.abspath("."),data_name))
+            print('--->', data_name, 'upload')
+    except Exception as e :
+        print(e)
+        return False
             
 if __name__ == '__main__':
     lat_limit = 24.5
